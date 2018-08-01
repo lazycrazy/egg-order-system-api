@@ -5,6 +5,31 @@ class QueryController extends Controller {
     super(ctx)
   }
  
+ async rolePermission() {
+    const { ctx } = this
+    const permissions = await  ctx.model.query(`SELECT   CONVERT(bit,(CASE WHEN b.FunctionId IS NULL THEN 1 ELSE 0 END)) AS isnew, a.PartID AS roleid, a.Name AS rolename, ISNULL(b.FunctionId, 0) AS auth
+FROM      mySHOPSHConnect.dbo.Part AS a LEFT OUTER JOIN
+                OrgRoleVSFunction AS b ON b.OrgRoleID = a.PartID
+ORDER BY roleid`, { type: ctx.model.QueryTypes.SELECT}) 
+    const res = permissions
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx, res})
+  }
+
+  async setRolePermission() {
+    const { ctx } = this
+
+    const payload = ctx.request.body || {}
+    let sql = payload.isnew ? `insert into order_review.dbo.OrgRoleVSFunction(OrgRoleID,FunctionId) 
+    values (:roleid,:funcitonid)` : `update order_review.dbo.OrgRoleVSFunction set FunctionId=:funcitonid
+    where OrgRoleID=:roleid and FunctionId=:auth_bak`
+    const type = payload.isnew ? ctx.model.QueryTypes.INSERT : ctx.model.QueryTypes.UPDATE
+    const res = await ctx.model.query(sql,  { replacements: {roleid: payload.roleid, funcitonid: payload.auth, auth_bak: payload.auth_bak}, type})
+    ctx.logger.debug('execute result ： ' + JSON.stringify(res))
+
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx, res})
+  }
 
   async orderProperty() {
     const { ctx } = this

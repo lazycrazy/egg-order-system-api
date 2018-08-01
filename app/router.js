@@ -19,6 +19,9 @@ module.exports = app => {
   router.get('/api/query/orderProperty', controller.query.orderProperty)
   router.put('/api/query/orderProperty', controller.query.setOrderProperty)
 
+  router.get('/api/query/rolePermission', controller.query.rolePermission)
+  router.put('/api/query/rolePermission', controller.query.setRolePermission)
+
 
   // userAccess
   router.post('/api/user/access/login', controller.userAccess.login)
