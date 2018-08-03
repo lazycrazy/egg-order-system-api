@@ -15,12 +15,17 @@ module.exports = app => {
   router.delete('/api/role', controller.role.removes)
   router.resources('role', '/api/role', controller.role)
 
-  // query
+  router.get('/api/query/shop', controller.query.shop)
+  router.get('/api/query/functionSetting', controller.query.functionSetting)
+  router.get('/api/query/shopGoods', controller.query.shopGoods)
   router.get('/api/query/orderProperty', controller.query.orderProperty)
-  router.put('/api/query/orderProperty', controller.query.setOrderProperty)
-
   router.get('/api/query/rolePermission', controller.query.rolePermission)
-  router.put('/api/query/rolePermission', controller.query.setRolePermission)
+
+
+  // query
+  router.put('/api/set/orderProperty', controller.set.orderProperty)
+  router.put('/api/set/rolePermission', controller.set.rolePermission)
+  router.post('/api/set/functionSetting', controller.set.functionSetting)
 
 
   // userAccess

@@ -4,6 +4,46 @@ class QueryController extends Controller {
   constructor(ctx) {
     super(ctx)
   }
+
+  
+
+  async functionSetting() {
+    const { ctx } = this
+    const payload = ctx.request.body || {}
+    const fs = await ctx.model.query(`SELECT   fs.FunctionId, fs.ShopId, fs.GoodsId, fs.DeptId, fs.ordermultiple, fs.OrderNum, fs.OrderAmt, fs.DayUpperlimit, 
+                fs.DayUpperlimitAmt, fs.LastModifyDT, g.BarcodeID AS barcodeid, g.Name AS goodname, s.Name AS shopname, 
+                d.Name AS deptname
+FROM      FunctionSetting AS fs INNER JOIN
+                mySHOPSHStock.dbo.Goods AS g ON fs.GoodsId = g.GoodsID INNER JOIN
+                mySHOPSHStock.dbo.Shop AS s ON fs.ShopId = s.ID LEFT OUTER JOIN
+                mySHOPSHStock.dbo.Dept AS d ON fs.DeptId = d.ID
+WHERE   (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)`,  { replacements: { shopid: payload.shopid, funcitonid: payload.funcitonid }, type: ctx.model.QueryTypes.SELECT })
+    const res = fs
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx, res})
+  }
+
+ async shopGoods() {
+    const { ctx } = this
+    const payload = ctx.request.body || {}
+    const shops = await ctx.model.query(`SELECT   gs.GoodsID, g.BarcodeID AS barcodeid, g.Name AS goodname
+FROM      mySHOPSHStock.dbo.GoodsShop AS gs INNER JOIN
+                mySHOPSHStock.dbo.Goods AS g ON gs.GoodsID = g.GoodsID
+WHERE   (gs.ShopId = :shopid)`, { replacements: { shopid: payload.shopid}, type: ctx.model.QueryTypes.SELECT })
+    const res = shopGoods
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx, res})
+  }
+
+  async shop() {
+    const { ctx } = this
+    const shops = await ctx.model.query(`SELECT a.ID value, RTRIM(a.Name) AS label
+FROM      mySHOPSHStock.dbo.Shop as a
+WHERE   (a.ShopType = 11)`, { type: ctx.model.QueryTypes.SELECT})
+    const res = shops
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx, res})
+  }
  
  async rolePermission() {
     const { ctx } = this
@@ -16,20 +56,7 @@ ORDER BY roleid`, { type: ctx.model.QueryTypes.SELECT})
     ctx.helper.success({ctx, res})
   }
 
-  async setRolePermission() {
-    const { ctx } = this
 
-    const payload = ctx.request.body || {}
-    let sql = payload.isnew ? `insert into order_review.dbo.OrgRoleVSFunction(OrgRoleID,FunctionId) 
-    values (:roleid,:funcitonid)` : `update order_review.dbo.OrgRoleVSFunction set FunctionId=:funcitonid
-    where OrgRoleID=:roleid and FunctionId=:auth_bak`
-    const type = payload.isnew ? ctx.model.QueryTypes.INSERT : ctx.model.QueryTypes.UPDATE
-    const res = await ctx.model.query(sql,  { replacements: {roleid: payload.roleid, funcitonid: payload.auth, auth_bak: payload.auth_bak}, type})
-    ctx.logger.debug('execute result ： ' + JSON.stringify(res))
-
-    // 设置响应内容和响应状态码
-    ctx.helper.success({ctx, res})
-  }
 
   async orderProperty() {
     const { ctx } = this
@@ -57,22 +84,6 @@ FROM      mySHOPSHStock.dbo.hy_deptsku AS a LEFT OUTER JOIN
                 + '-' + a.SkuType
 ORDER BY storename, a.SkuType, deptname`, { type: ctx.model.QueryTypes.SELECT}) 
     const res = {shops, mlsxs, xssxs, pldxzs}
-    // 设置响应内容和响应状态码
-    ctx.helper.success({ctx, res})
-  }
-
-
-  async setOrderProperty() {
-    const { ctx } = this
-
-    const payload = ctx.request.body || {}
-    let sql = payload.isnew ? `insert into order_review.dbo.OrderControl(typeid,code,forbidden) 
-    values (:typeid,:code,:forbidden)` : `update order_review.dbo.OrderControl set forbidden=:forbidden, LastModifyDT=getdate() 
-    where typeid=:typeid and code=:code`
-    const type = payload.isnew ? ctx.model.QueryTypes.INSERT : ctx.model.QueryTypes.UPDATE
-    const res = await ctx.model.query(sql,  { replacements: {typeid: payload.type, code: payload.id, forbidden: !payload.allowOrder}, type})
-    ctx.logger.debug('execute result ： ' + JSON.stringify(res))
-
     // 设置响应内容和响应状态码
     ctx.helper.success({ctx, res})
   }
