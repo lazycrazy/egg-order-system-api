@@ -16,8 +16,8 @@ module.exports = app => {
   router.resources('role', '/api/role', controller.role)
 
   router.get('/api/query/shop', controller.query.shop)
-  router.get('/api/query/functionSetting', controller.query.functionSetting)
-  router.get('/api/query/shopGoods', controller.query.shopGoods)
+  router.get('/api/query/functionSetting/:shopid/:funcid', controller.query.functionSetting)
+  router.get('/api/query/shopGoods/:shopid', controller.query.shopGoods)
   router.get('/api/query/orderProperty', controller.query.orderProperty)
   router.get('/api/query/rolePermission', controller.query.rolePermission)
 

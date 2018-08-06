@@ -8,18 +8,44 @@ class SetController extends Controller {
   async functionSetting() {
   	const { ctx } = this
     const payload = ctx.request.body || {}
-    const isql = `insert into order_review.dbo.OrgRoleVSFunction(OrgRoleID,FunctionId) 
-    values (:roleid,:funcitonid)`
-    const usql = `update order_review.dbo.OrgRoleVSFunction set FunctionId=:funcitonid
-    where OrgRoleID=:roleid and FunctionId=:auth_bak`
-    ctx.logger.debug('payload - ' + JSON.stringify(payload))
+    const isql = `insert into order_review.dbo.[FunctionSetting]
+           ([FunctionId]
+           ,[ShopId]
+           ,[GoodsId]
+           ,[DeptId]
+           ,[ordermultiple]
+           ,[OrderNum]
+           ,[OrderAmt]
+           ,[DayUpperlimit]
+           ,[DayUpperlimitAmt]
+           ,[LastModifyDT]) 
+    values(:functionid,
+           ,:shopid,
+           ,:goodsid,
+           ,:deptId,
+           ,:ordermultiple
+           ,:ordernum,
+           ,:orderamt,
+           ,:dayupperlimit,
+           ,:dayupperlimitamt,
+           ,getdate()`
+    const usql = `update order_review.dbo.[FunctionSetting]
+   SET [DeptId] = :deptId
+      ,[ordermultiple] = :ordermultiple
+      ,[OrderNum] = :ordernum
+      ,[OrderAmt] = :orderamt
+      ,[DayUpperlimit] = :dayupperlimit
+      ,[DayUpperlimitAmt] = :dayupperlimitamt
+      ,[LastModifyDT] = getdate()
+ WHERE ShopId=:shopid and FunctionId=:functionid and GoodsId=:goodsid`
+    // ctx.logger.debug('payload - ' + JSON.stringify(payload))
 
     return ctx.model.transaction(async function (t) {
     	    let promises = []
 	        for( let i of payload){
 			    const sql = i.isnew ? isql : usql;
 				const type = i.isnew ? ctx.model.QueryTypes.INSERT : ctx.model.QueryTypes.UPDATE;
-				let newPromise = ctx.model.query(sql, { transaction: t, replacements: {roleid: i.roleid, funcitonid: i.auth, auth_bak: i.auth_bak}, type})
+				let newPromise = ctx.model.query(sql, { transaction: t, replacements: {i}, type})
 	    		promises.push(newPromise)	    		
 			}
 			const res = await Promise.all(promises)   

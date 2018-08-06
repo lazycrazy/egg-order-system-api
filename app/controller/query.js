@@ -9,7 +9,7 @@ class QueryController extends Controller {
 
   async functionSetting() {
     const { ctx } = this
-    const payload = ctx.request.body || {}
+    const payload = ctx.params
     const fs = await ctx.model.query(`SELECT   fs.FunctionId, fs.ShopId, fs.GoodsId, fs.DeptId, fs.ordermultiple, fs.OrderNum, fs.OrderAmt, fs.DayUpperlimit, 
                 fs.DayUpperlimitAmt, fs.LastModifyDT, g.BarcodeID AS barcodeid, g.Name AS goodname, s.Name AS shopname, 
                 d.Name AS deptname
@@ -17,20 +17,64 @@ FROM      FunctionSetting AS fs INNER JOIN
                 mySHOPSHStock.dbo.Goods AS g ON fs.GoodsId = g.GoodsID INNER JOIN
                 mySHOPSHStock.dbo.Shop AS s ON fs.ShopId = s.ID LEFT OUTER JOIN
                 mySHOPSHStock.dbo.Dept AS d ON fs.DeptId = d.ID
-WHERE   (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)`,  { replacements: { shopid: payload.shopid, funcitonid: payload.funcitonid }, type: ctx.model.QueryTypes.SELECT })
+WHERE   (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)`,  { replacements: { shopid: payload.shopid, functionid: payload.funcid }, type: ctx.model.QueryTypes.SELECT })
     const res = fs
     // 设置响应内容和响应状态码
     ctx.helper.success({ctx, res})
   }
 
+// (async () => {
+//   const rawResponse = await fetch('https://httpbin.org/post', {
+//     method: 'POST',
+//     headers: {
+//       'Accept': 'application/json',
+//       'Content-Type': 'application/json'
+//     },
+//     body: JSON.stringify({a: 1, b: 'Textual content'})
+//   });
+//   const content = await rawResponse.json();
+
+//   console.log(content);
+// })();
+
+ // bs = content.data.map(b =>  ({type:1,id:b.b_id,label:b.b_name})).filter((v, i, a) => a.findIndex( z => z.id == v.id) === i).sort((a,b)=> a.id - b.id)
  async shopGoods() {
     const { ctx } = this
-    const payload = ctx.request.body || {}
-    const shops = await ctx.model.query(`SELECT   gs.GoodsID, g.BarcodeID AS barcodeid, g.Name AS goodname
-FROM      mySHOPSHStock.dbo.GoodsShop AS gs INNER JOIN
-                mySHOPSHStock.dbo.Goods AS g ON gs.GoodsID = g.GoodsID
-WHERE   (gs.ShopId = :shopid)`, { replacements: { shopid: payload.shopid}, type: ctx.model.QueryTypes.SELECT })
-    const res = shopGoods
+    const payload = ctx.params
+
+    const goods = await ctx.model.query(`WITH goods AS (SELECT   gs.GoodsID AS goods_id, RTRIM(g.BarcodeID) AS barcode_id, RTRIM(g.Name) AS goods_name, 
+                                           g.DeptID AS dept_id, RTRIM(d.Name) AS dept_name, CAST(LEFT(g.DeptID, 4) AS int) AS z_id, 
+                                           RTRIM(z.Name) AS z_name, CAST(LEFT(g.DeptID, 3) AS int) AS da_id, RTRIM(da.Name) AS da_name, 
+                                           CAST(LEFT(g.DeptID, 2) AS int) AS k_id, RTRIM(k.Name) AS k_name, CAST(LEFT(g.DeptID, 1) AS int) 
+                                           AS b_id, RTRIM(b.Name) AS b_name
+                           FROM      mySHOPSHStock.dbo.GoodsShop AS gs INNER JOIN
+                                           mySHOPSHStock.dbo.Goods AS g ON gs.GoodsID = g.GoodsID LEFT OUTER JOIN
+                                           mySHOPSHStock.dbo.Dept AS d ON g.DeptID = d.ID LEFT OUTER JOIN
+                                           mySHOPSHStock.dbo.SGroup AS z ON z.ID = LEFT(g.DeptID, 4) LEFT OUTER JOIN
+                                           mySHOPSHStock.dbo.SGroup AS da ON da.ID = LEFT(g.DeptID, 3) LEFT OUTER JOIN
+                                           mySHOPSHStock.dbo.SGroup AS k ON k.ID = LEFT(g.DeptID, 2) LEFT OUTER JOIN
+                                           mySHOPSHStock.dbo.SGroup AS b ON b.ID = LEFT(g.DeptID, 1)
+                           WHERE   (gs.Flag IN (0, 8)) AND (gs.ShopID = :shopid))
+    SELECT   type, id, label, pid
+    FROM      (SELECT DISTINCT 1 AS type, b_id AS id, b_name AS label, NULL AS pid
+                     FROM      goods
+                     UNION
+                     SELECT DISTINCT 2 AS type, k_id AS id, k_name AS label, b_id AS pid
+                     FROM      goods
+                     UNION
+                     SELECT DISTINCT 3 AS type, da_id AS id, da_name AS label, k_id AS pid
+                     FROM      goods
+                     UNION
+                     SELECT DISTINCT 4 AS type, z_id AS id, z_name AS label, da_id AS pid
+                     FROM      goods
+                     UNION
+                     SELECT DISTINCT 5 AS type, dept_id AS id, dept_name AS label, z_id AS pid
+                     FROM      goods
+                     UNION
+                     SELECT   6 AS type, goods_id AS id, goods_name AS label, dept_id AS pid
+                     FROM      goods) AS a
+    ORDER BY pid, id`, { replacements: { shopid: payload.shopid}, type: ctx.model.QueryTypes.SELECT })
+    const res = goods
     // 设置响应内容和响应状态码
     ctx.helper.success({ctx, res})
   }
