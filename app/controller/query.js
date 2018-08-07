@@ -9,16 +9,29 @@ class QueryController extends Controller {
 
   async functionSetting() {
     const { ctx } = this
-    const payload = ctx.params
-    const fs = await ctx.model.query(`SELECT   fs.FunctionId, fs.ShopId, fs.GoodsId, fs.DeptId, fs.ordermultiple, fs.OrderNum, fs.OrderAmt, fs.DayUpperlimit, 
+    const payload = ctx.request.body
+    const fs = await ctx.model.query(`
+SELECT  *
+FROM    (
+SELECT ROW_NUMBER() OVER ( ORDER BY fs.GoodsId ) AS RowNum,fs.FunctionId, fs.ShopId, fs.GoodsId, fs.DeptId, fs.ordermultiple, fs.OrderNum, fs.OrderAmt, fs.DayUpperlimit, 
                 fs.DayUpperlimitAmt, fs.LastModifyDT, g.BarcodeID AS barcodeid, g.Name AS goodsname, s.Name AS shopname, 
                 d.Name AS deptname
 FROM      FunctionSetting AS fs INNER JOIN
                 mySHOPSHStock.dbo.Goods AS g ON fs.GoodsId = g.GoodsID INNER JOIN
                 mySHOPSHStock.dbo.Shop AS s ON fs.ShopId = s.ID LEFT OUTER JOIN
                 mySHOPSHStock.dbo.Dept AS d ON fs.DeptId = d.ID
+WHERE   (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)) as resultRows
+WHERE   RowNum between :index and :count
+ORDER BY RowNum
+`,  { replacements: { shopid: payload.shopid, functionid: parseInt(payload.funcid), index: (payload.curpage - 1) * payload.pagesize + 1, count: (payload.curpage) * payload.pagesize}, type: ctx.model.QueryTypes.SELECT })
+    const rs = await ctx.model.query(`SELECT count(1) value
+FROM      FunctionSetting AS fs INNER JOIN
+                mySHOPSHStock.dbo.Goods AS g ON fs.GoodsId = g.GoodsID INNER JOIN
+                mySHOPSHStock.dbo.Shop AS s ON fs.ShopId = s.ID 
 WHERE   (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)`,  { replacements: { shopid: payload.shopid, functionid: parseInt(payload.funcid) }, type: ctx.model.QueryTypes.SELECT })
-    const res = fs
+    ctx.logger.debug('fs:'+JSON.stringify(fs))
+    ctx.logger.debug('rs'+JSON.stringify(rs))
+    const res = { fs, total: rs[0].value }
     // 设置响应内容和响应状态码
     ctx.helper.success({ctx, res})
   }
