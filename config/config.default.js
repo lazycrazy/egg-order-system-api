@@ -34,16 +34,18 @@ module.exports = appInfo => {
     match: '/jwt', // optional
   }
 
-
+  config.bodyParser = {
+    jsonLimit: '2mb'
+  }
 
   config.sequelize = {
-  dialect: 'mssql', // support: mysql, mariadb, postgres, mssql
-  database: 'order_review',
-  host: 'localhost',
-  port: 3483,
-  username: 'sa',
-  password: 'sa',
-};
+    dialect: 'mssql', // support: mysql, mariadb, postgres, mssql
+    database: 'order_review',
+    host: 'localhost',
+    port: 3483,
+    username: 'sa',
+    password: 'sa',
+  }
 
   return config
 }

@@ -11,13 +11,13 @@ class QueryController extends Controller {
     const { ctx } = this
     const payload = ctx.params
     const fs = await ctx.model.query(`SELECT   fs.FunctionId, fs.ShopId, fs.GoodsId, fs.DeptId, fs.ordermultiple, fs.OrderNum, fs.OrderAmt, fs.DayUpperlimit, 
-                fs.DayUpperlimitAmt, fs.LastModifyDT, g.BarcodeID AS barcodeid, g.Name AS goodname, s.Name AS shopname, 
+                fs.DayUpperlimitAmt, fs.LastModifyDT, g.BarcodeID AS barcodeid, g.Name AS goodsname, s.Name AS shopname, 
                 d.Name AS deptname
 FROM      FunctionSetting AS fs INNER JOIN
                 mySHOPSHStock.dbo.Goods AS g ON fs.GoodsId = g.GoodsID INNER JOIN
                 mySHOPSHStock.dbo.Shop AS s ON fs.ShopId = s.ID LEFT OUTER JOIN
                 mySHOPSHStock.dbo.Dept AS d ON fs.DeptId = d.ID
-WHERE   (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)`,  { replacements: { shopid: payload.shopid, functionid: payload.funcid }, type: ctx.model.QueryTypes.SELECT })
+WHERE   (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)`,  { replacements: { shopid: payload.shopid, functionid: parseInt(payload.funcid) }, type: ctx.model.QueryTypes.SELECT })
     const res = fs
     // 设置响应内容和响应状态码
     ctx.helper.success({ctx, res})
