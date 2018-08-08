@@ -5,6 +5,29 @@ class SetController extends Controller {
     super(ctx)
   }
 
+// (async () => {
+//   const rawResponse = await fetch('/api/set/functionSetting', {
+//     method: 'POST',
+//     headers: {
+//       'Accept': 'application/json',
+//       'Content-Type': 'application/json'
+//     },
+//     body: JSON.stringify({
+//             shopid: 'B096', 
+//             functionid: 1, 
+//             uids: [[119,120],[135]],
+//             iids: [[136],[138,148],[175,176,177]], 
+//             multiple:1,
+//             num:1, 
+//             amt:2, 
+//             limitnum:3, 
+//             limitamt:4
+//           })
+//   });
+//   const content = await rawResponse.json();
+
+//   console.log(content);
+// })();
   async functionSettingNew() {
     const { ctx } = this
     const obj = ctx.request.body || {}
@@ -74,6 +97,22 @@ WHERE   (GoodsID IN (:gids))`
     });
   }
  
+//  (async () => {
+//   const rawResponse = await fetch('/api/set/functionSettingByShop', {
+//     method: 'POST',
+//     headers: {
+//       'Accept': 'application/json',
+//       'Content-Type': 'application/json'
+//     },
+//     body: JSON.stringify({
+//             curshop: 'B096', 
+//             shops: ['B002','B003']
+//           })
+//   });
+//   const content = await rawResponse.json();
+
+//   console.log(content);
+// })();
  async functionSettingByShop() {
     const { ctx } = this
     const obj = ctx.request.body || {}
@@ -90,11 +129,9 @@ WHERE   (fs.ShopId = :curshop)`
     const dsql = `delete from order_review.dbo.FunctionSetting
  WHERE ShopId in (:shops)`
     return ctx.model.transaction(async function (t) {
-      const dPromise = ctx.model.query(dsql, { transaction: t, replacements: obj, type:ctx.model.QueryTypes.DELETE})
-      const iPromise = ctx.model.query(isql, { transaction: t, replacements: obj, type:ctx.model.QueryTypes.INSERT})
-      const res = await Promise.all([dPromise, iPromise])   
-      ctx.logger.debug('res - ' + res)
-      return res 
+      const resd = await ctx.model.query(dsql, { transaction: t, replacements: obj, type:ctx.model.QueryTypes.DELETE})
+      const resi = await ctx.model.query(isql, { transaction: t, replacements: obj, type:ctx.model.QueryTypes.INSERT})
+      return [resd, resi] 
     }).then(function (result) {
       // Transaction has been committed
       // result is whatever the result of the promise chain returned to the transaction callback
@@ -105,6 +142,7 @@ WHERE   (fs.ShopId = :curshop)`
       throw err
     });
   }
+  
   async functionSetting() {
   	const { ctx } = this
     const obj = ctx.request.body || {}
