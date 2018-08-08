@@ -12,22 +12,22 @@ module.exports = app => {
   // router.put('/api/role/:id', controller.role.update)
   // router.get('/api/role/:id', controller.role.show)
   // router.get('/api/role', controller.role.index)
-  router.delete('/api/role', controller.role.removes)
-  router.resources('role', '/api/role', controller.role)
+  router.delete('/api/role', app.jwt, controller.role.removes)
+  router.resources('role', '/api/role', app.jwt, controller.role)
 
-  router.get('/api/query/shop', controller.query.shop)
-  router.post('/api/query/functionSetting', controller.query.functionSetting)
-  router.get('/api/query/shopGoods/:shopid', controller.query.shopGoods)
-  router.get('/api/query/orderProperty', controller.query.orderProperty)
-  router.get('/api/query/rolePermission', controller.query.rolePermission)
+  router.get('/api/query/shop', app.jwt, controller.query.shop)
+  router.post('/api/query/functionSetting', app.jwt, controller.query.functionSetting)
+  router.get('/api/query/shopGoods/:shopid', app.jwt, controller.query.shopGoods)
+  router.get('/api/query/orderProperty', app.jwt, controller.query.orderProperty)
+  router.get('/api/query/rolePermission', app.jwt, controller.query.rolePermission)
 
 
   // query
-  router.put('/api/set/orderProperty', controller.set.orderProperty)
-  router.put('/api/set/rolePermission', controller.set.rolePermission)
-  router.post('/api/set/functionSetting', controller.set.functionSettingNew)
-  router.post('/api/set/functionSettingByShop', controller.set.functionSettingByShop)
-  router.delete('/api/set/functionSetting', controller.set.deleteFunctionSetting)
+  router.put('/api/set/orderProperty', app.jwt, controller.set.orderProperty)
+  router.put('/api/set/rolePermission', app.jwt, controller.set.rolePermission)
+  router.post('/api/set/functionSetting', app.jwt, controller.set.functionSettingNew)
+  router.post('/api/set/functionSettingByShop', app.jwt, controller.set.functionSettingByShop)
+  router.delete('/api/set/functionSetting', app.jwt, controller.set.deleteFunctionSetting)
 
 
   // userAccess
@@ -42,19 +42,19 @@ module.exports = app => {
   // router.put('/api/user/:id', controller.user.update)
   // router.get('/api/user/:id', controller.user.show)
   // router.get('/api/user', controller.user.index)
-  router.delete('/api/user', controller.user.removes)
-  router.resources('user', '/api/user', controller.user)
+  router.delete('/api/user', app.jwt, controller.user.removes)
+  router.resources('user', '/api/user', app.jwt, controller.user)
 
   // upload
-  router.post('/api/upload', controller.upload.create)
-  router.post('/api/upload/url', controller.upload.url)
-  router.post('/api/uploads', controller.upload.multiple)
-  router.delete('/api/upload/:id', controller.upload.destroy)
+  router.post('/api/upload', app.jwt, controller.upload.create)
+  router.post('/api/upload/url', app.jwt, controller.upload.url)
+  router.post('/api/uploads', app.jwt, controller.upload.multiple)
+  router.delete('/api/upload/:id', app.jwt, controller.upload.destroy)
   // router.put('/api/upload/:id', controller.upload.update)
-  router.post('/api/upload/:id', controller.upload.update) // Ant Design Pro
-  router.put('/api/upload/:id/extra', controller.upload.extra)
-  router.get('/api/upload/:id', controller.upload.show)
-  router.get('/api/upload', controller.upload.index)
-  router.delete('/api/upload', controller.upload.removes)
+  router.post('/api/upload/:id', app.jwt, controller.upload.update) // Ant Design Pro
+  router.put('/api/upload/:id/extra', app.jwt, controller.upload.extra)
+  router.get('/api/upload/:id', app.jwt, controller.upload.show)
+  router.get('/api/upload', app.jwt, controller.upload.index)
+  router.delete('/api/upload', app.jwt, controller.upload.removes)
   // router.resources('upload', '/api/upload', controller.upload)
 }
