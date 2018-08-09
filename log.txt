@@ -1,0 +1,28 @@
+drop function F_CheckPurchaseItem;
+
+USE order_review 
+GO
+--单号,商品id,操作人
+CREATE  FUNCTION F_CheckPurchaseItem(@sheetid char(16),@goodsid int,@userid int)
+returns nvarchar(256) --没有问题的返回'',有问题返回原因 
+AS
+BEGIN
+DECLARE @rs nvarchar(256)
+,
+@shopid char(4)
+SET @rs = ''
+SET @shopid = (select ShopID from mySHOPSHStock..PurchaseAsk0 where SheetID=@sheetid)
+ --各种校验
+ if ((select count(1) from [dbo].[OrderControl] where [TypeID]=1 and code=@shopid and [forbidden]=1)>0)   
+  set @rs = @rs + '此店不允许订货'+CHAR(13)+CHAR(10)
+return @rs
+  if(1=1)
+  set @rs = @rs + '有错2'+CHAR(13)+CHAR(10)
+  --用户审批权限属性值  
+
+RETURN   @rs   
+END
+GO 
+
+SELECT   dbo.F_CheckPurchaseItem('1111111111111111',1,1)  as a
+ 
