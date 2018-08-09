@@ -10,5 +10,6 @@ run/
 .DS_Store
 *.sw*
 *.un~
+*.bat
 #.vscode/
 app/public/uploads/
