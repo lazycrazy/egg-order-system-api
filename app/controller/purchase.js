@@ -20,26 +20,27 @@ WHERE   RowNum between :index and :count
 ORDER BY RowNum
 `,  { replacements: { shopid: payload.shopid, index: (payload.curpage - 1) * payload.pagesize + 1, count: (payload.curpage) * payload.pagesize}, type: ctx.model.QueryTypes.SELECT })
     const rs = await ctx.model.query(`
-    	SELECT count(1) FROM mySHOPSHStock.dbo.PurchaseAsk0 AS p
+    	SELECT count(1) as value FROM mySHOPSHStock.dbo.PurchaseAsk0 AS p
 where p.ShopID=:shopid`,  { replacements: { shopid: payload.shopid }, type: ctx.model.QueryTypes.SELECT })
-    ctx.logger.debug('fs:'+JSON.stringify(fs))
-    ctx.logger.debug('rs'+JSON.stringify(rs))
     const res = { fs, total: rs[0].value }
+    ctx.logger.debug('res'+JSON.stringify(res))
     // 设置响应内容和响应状态码
     ctx.helper.success({ctx, res})
   }
 
-  async itemByIds() {
+  async itemBySheetIds() {
     const { ctx } = this
     const payload = ctx.request.body
-    const fs = await ctx.model.query(`SELECT   SheetID, serialid, GoodsID, PKNum, Qty, PKName, PKSpec, BarcodeID, Cost, Price, StockQty, SaleDate, ReceiptDate, 
-                PromotionType, NewFlag, Notes, MonthSaleQty, LastWeekSaleQty, KSDays, InputGoodsId, OrdDay, MakeUpInterval, 
-                DeliverDay, AdviceQty, SSQ, retdcflag, DeliveryAddr, SafeInventoryDay, COV, CanSaleQty, OpenTransQty, 
-                LastyearSaleQty, MakeupDays, LastTotalSaleQty,order_review.dbo.F_CheckPurchaseItem(SheetID,GoodsID,:userid) reason
-FROM      mySHOPSHStock.dbo.PurchaseAskItem0
+    const itemsp = ctx.model.query(`SELECT i.*,g.Name goodsname, order_review.dbo.F_CheckPurchaseItem(SheetID,i.GoodsID,:userid) reason
+FROM      mySHOPSHStock.dbo.PurchaseAskItem0 i left join mySHOPSHStock..Goods g on g.GoodsID = i.GoodsID
 WHERE   (SheetID IN (:sheetids)) order by serialid
 `,  { replacements: { sheetids: payload.sheetids, userid: ctx.state.user.data._id }, type: ctx.model.QueryTypes.SELECT })
-    const res = fs
+    const logsp = ctx.model.query(`SELECT  l.*,u.Name LogUser FROM      order_review.dbo.[PurchaseControlItemLogs] l left JOIN
+        mySHOPSHConnect.dbo.Login  u on l.LogUserID = u.LoginID
+WHERE   (SheetID IN (:sheetids)) order by LogTime
+`,  { replacements: { sheetids: payload.sheetids }, type: ctx.model.QueryTypes.SELECT })
+    const p2 = await Promise.all([itemsp, logsp])
+    const res = p2
     // 设置响应内容和响应状态码
     ctx.helper.success({ctx, res})
   }

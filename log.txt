@@ -9,9 +9,13 @@ AS
 BEGIN
 DECLARE @rs nvarchar(256)
 ,
-@shopid char(4)
+@shopid char(4),
+@qty decimal(12,3)
 SET @rs = ''
 SET @shopid = (select ShopID from mySHOPSHStock..PurchaseAsk0 where SheetID=@sheetid)
+SET @qty = (select Qty from mySHOPSHStock..[PurchaseAskItem0] where SheetID=@sheetid and @goodsid = [GoodsID])
+if(isnull(@qty,0) <=0) 
+  return @rs
  --各种校验
  if ((select count(1) from [dbo].[OrderControl] where [TypeID]=1 and code=@shopid and [forbidden]=1)>0)   
   set @rs = @rs + '此店不允许订货'+CHAR(13)+CHAR(10)

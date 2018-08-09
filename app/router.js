@@ -29,9 +29,9 @@ module.exports = app => {
   router.post('/api/set/functionSettingByShop', app.jwt, controller.set.functionSettingByShop)
   router.delete('/api/set/functionSetting', app.jwt, controller.set.deleteFunctionSetting)
 
-  router.post('/api/purchase/listByShop', controller.purchase.listByShop)
-  router.post('/api/purchase/itemByIds', controller.purchase.itemByIds)
-  router.post('/api/purchase/check', controller.purchase.check)
+  router.post('/api/purchase/listByShop', app.jwt, controller.purchase.listByShop)
+  router.post('/api/purchase/itemBySheetIds', app.jwt, controller.purchase.itemBySheetIds)
+  router.post('/api/purchase/check', app.jwt, controller.purchase.check)
 
 
   // userAccess
