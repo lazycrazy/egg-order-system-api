@@ -47,7 +47,7 @@ INSERT INTO order_review.[dbo].[PurchaseControlItemLogs]
            ,[LastyearSaleQty]
            ,[MakeupDays]
            ,[LastTotalSaleQty]) 
-           select getdate(),':userid',':desc',[SheetID]
+           select getdate(),:userid,:desc,[SheetID]
            ,[serialid]
            ,[GoodsID]
            ,[PKNum]
@@ -94,7 +94,7 @@ INSERT INTO order_review.[dbo].[PurchaseControlItemLogs]
 `
     return ctx.model.transaction(async function (t) {
             const ires = await ctx.model.query(isql,  { transaction: t, replacements: { userid: ctx.state.user.data._id, desc: payload.desc, sheetid: payload.sheetid, goodsid: payload.goodsid }, type: ctx.model.QueryTypes.INSERT })
-            const ures = await ctx.model.query(usql,  { transaction: t, replacements: { userid: ctx.state.user.data._id, desc: payload.desc, sheetid: payload.sheetid, goodsid: payload.goodsid }, type: ctx.model.QueryTypes.UPDATE })
+            const ures = await ctx.model.query(usql,  { transaction: t, replacements: { userid: ctx.state.user.data._id, desc: payload.desc, sheetid: payload.sheetid, goodsid: payload.goodsid, qty: payload.qty }, type: ctx.model.QueryTypes.UPDATE })
             const res = [ires, ures] 
             ctx.logger.debug('res - ' + res)
         return  res 
