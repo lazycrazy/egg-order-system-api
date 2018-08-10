@@ -33,7 +33,9 @@ module.exports = app => {
   router.post('/api/purchase/listByShop', app.jwt, controller.purchase.listByShop)
   router.post('/api/purchase/itemBySheetIds', app.jwt, controller.purchase.itemBySheetIds)
   router.post('/api/purchase/itemReason', app.jwt, controller.purchase.itemReason)
-  router.post('/api/purchase/check', app.jwt, controller.purchase.check)
+  router.post('/api/purchase/review', app.jwt, controller.purchase.review)
+  router.post('/api/purchase/sheetLog', app.jwt, controller.purchase.sheetLog)
+  router.post('/api/purchase/updateItemAndLog', app.jwt, controller.purchase.updateItemAndLog)
 
 
   // userAccess

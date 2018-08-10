@@ -5,6 +5,126 @@ class PurchaseController extends Controller {
     super(ctx)
   } 
 
+   async updateItemAndLog() {
+    const { ctx } = this
+    const payload = ctx.request.body || {}
+    const isql = ` 
+INSERT INTO order_review.[dbo].[PurchaseControlItemLogs]
+           ([LogTime]
+           ,[LogUserID]
+           ,[LogDesc]
+           ,[SheetID]
+           ,[serialid]
+           ,[GoodsID]
+           ,[PKNum]
+           ,[Qty]
+           ,[PKName]
+           ,[PKSpec]
+           ,[BarcodeID]
+           ,[Cost]
+           ,[Price]
+           ,[StockQty]
+           ,[SaleDate]
+           ,[ReceiptDate]
+           ,[PromotionType]
+           ,[NewFlag]
+           ,[Notes]
+           ,[MonthSaleQty]
+           ,[LastWeekSaleQty]
+           ,[KSDays]
+           ,[InputGoodsId]
+           ,[OrdDay]
+           ,[MakeUpInterval]
+           ,[DeliverDay]
+           ,[AdviceQty]
+           ,[SSQ]
+           ,[retdcflag]
+           ,[DeliveryAddr]
+           ,[SafeInventoryDay]
+           ,[COV]
+           ,[CanSaleQty]
+           ,[OpenTransQty]
+           ,[LastyearSaleQty]
+           ,[MakeupDays]
+           ,[LastTotalSaleQty]) 
+           select getdate(),':userid',':desc',[SheetID]
+           ,[serialid]
+           ,[GoodsID]
+           ,[PKNum]
+           ,[Qty]
+           ,[PKName]
+           ,[PKSpec]
+           ,[BarcodeID]
+           ,[Cost]
+           ,[Price]
+           ,[StockQty]
+           ,[SaleDate]
+           ,[ReceiptDate]
+           ,[PromotionType]
+           ,[NewFlag]
+           ,[Notes]
+           ,[MonthSaleQty]
+           ,[LastWeekSaleQty]
+           ,[KSDays]
+           ,[InputGoodsId]
+           ,[OrdDay]
+           ,[MakeUpInterval]
+           ,[DeliverDay]
+           ,[AdviceQty]
+           ,[SSQ]
+           ,[retdcflag]
+           ,[DeliveryAddr]
+           ,[SafeInventoryDay]
+           ,[COV]
+           ,[CanSaleQty]
+           ,[OpenTransQty]
+           ,[LastyearSaleQty]
+           ,[MakeupDays]
+           ,[LastTotalSaleQty] from
+           mySHOPSHStock..PurchaseAskItem0 i
+           where
+           SheetID=:sheetid and GoodsID = :goodsid
+`
+    const usql = `UPDATE mySHOPSHStock.[dbo].[PurchaseAskItem0]
+   SET [Qty] = :qty 
+   WHERE  
+      [SheetID] = :sheetid
+      and 
+      [GoodsID] = :goodsid
+`
+    return ctx.model.transaction(async function (t) {
+            const ires = await ctx.model.query(isql,  { transaction: t, replacements: { userid: ctx.state.user.data._id, desc: payload.desc, sheetid: payload.sheetid, goodsid: payload.goodsid }, type: ctx.model.QueryTypes.INSERT })
+            const ures = await ctx.model.query(usql,  { transaction: t, replacements: { userid: ctx.state.user.data._id, desc: payload.desc, sheetid: payload.sheetid, goodsid: payload.goodsid }, type: ctx.model.QueryTypes.UPDATE })
+            const res = [ires, ures] 
+            ctx.logger.debug('res - ' + res)
+        return  res 
+        }).then(function (result) {
+          // Transaction has been committed
+          // result is whatever the result of the promise chain returned to the transaction callback
+            ctx.helper.success({ctx, res: result})  
+        }).catch(function (err) {
+          // Transaction has been rolled back
+          // err is whatever rejected the promise chain returned to the transaction callback
+          throw err
+        });
+
+  }
+
+  async sheetLog() {
+    const { ctx } = this
+    const payload = ctx.request.body || {}
+    const res = await ctx.model.query(`INSERT INTO order_review.[dbo].[PurchaseControlItemLogs]
+           ([LogTime]
+           ,[LogUserID]
+           ,[LogDesc]
+           ,[SheetID])
+     VALUES
+           (getdate(),:userid,:desc,:sheetid)
+`,  { replacements: { userid: ctx.state.user.data._id, desc: payload.desc, sheetid: payload.sheetid }, type: ctx.model.QueryTypes.INSERT })
+    ctx.logger.debug(res)
+    ctx.helper.success({ ctx, res })
+  }
+
   async reviewAuth() {
     const { ctx } = this
     const res = await ctx.model.query(`
@@ -74,10 +194,10 @@ WHERE   (SheetID IN (:sheetids)) order by LogTime
     ctx.helper.success({ctx, res})
   }
  
-  async check() {
+  async review() {
     const { ctx } = this
     const { sheetid } = ctx.request.body
-    const userid = 1 // ctx.state.user.data._id
+    const userid = ctx.state.user.data._id
     const fs = await ctx.model.query(`DECLARE @return_value int
 EXEC  @return_value = [mySHOPSHStock].[dbo].[ST_PurchaseAsk]
     @SheetID = :sheetid,
