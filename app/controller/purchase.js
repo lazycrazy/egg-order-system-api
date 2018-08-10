@@ -5,6 +5,18 @@ class PurchaseController extends Controller {
     super(ctx)
   } 
 
+  async reviewAuth() {
+    const { ctx } = this
+    const res = await ctx.model.query(`
+select isnull(max(rf.FunctionId ),0) auth 
+from mySHOPSHConnect..PartMember pm join
+order_review..[OrgRoleVSFunction] rf on pm.PartID = rf.OrgRoleID
+where pm.LoginID=  :userid 
+`,  { replacements: { userid: ctx.state.user.data._id}, type: ctx.model.QueryTypes.SELECT })
+    ctx.logger.debug(res)
+    ctx.helper.success({ ctx, res: res[0].auth })
+  }
+
   async listByShop() {
     const { ctx } = this
     const payload = ctx.request.body
@@ -27,6 +39,23 @@ where p.ShopID=:shopid`,  { replacements: { shopid: payload.shopid }, type: ctx.
     // 设置响应内容和响应状态码
     ctx.helper.success({ctx, res})
   }
+
+async itemReason() {
+    const { ctx } = this
+    const payload = ctx.request.body
+    const reasons = await ctx.model.query(`SELECT   SheetID, GoodsID, reason
+FROM      (SELECT   SheetID, GoodsID, dbo.F_CheckPurchaseItem(SheetID, GoodsID, :userid) AS reason
+                 FROM      mySHOPSHStock.dbo.PurchaseAskItem0
+                 WHERE   (SheetID IN (:sheetids))) AS results
+WHERE   (LEN(reason) > 0)
+`,  { replacements: { sheetids: payload.sheetids, userid: ctx.state.user.data._id }, type: ctx.model.QueryTypes.SELECT })
+     
+    const res = reasons
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx, res})
+  }
+
+  
 
   async itemBySheetIds() {
     const { ctx } = this

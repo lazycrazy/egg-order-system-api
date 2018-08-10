@@ -29,8 +29,10 @@ module.exports = app => {
   router.post('/api/set/functionSettingByShop', app.jwt, controller.set.functionSettingByShop)
   router.delete('/api/set/functionSetting', app.jwt, controller.set.deleteFunctionSetting)
 
+  router.get('/api/purchase/reviewAuth', app.jwt, controller.purchase.reviewAuth)
   router.post('/api/purchase/listByShop', app.jwt, controller.purchase.listByShop)
   router.post('/api/purchase/itemBySheetIds', app.jwt, controller.purchase.itemBySheetIds)
+  router.post('/api/purchase/itemReason', app.jwt, controller.purchase.itemReason)
   router.post('/api/purchase/check', app.jwt, controller.purchase.check)
 
 
