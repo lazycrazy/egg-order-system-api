@@ -5,7 +5,16 @@ class QueryController extends Controller {
     super(ctx)
   }
 
-  
+  async goodsIdsBySF() {
+    const { ctx } = this
+    const payload = ctx.request.body
+    const fs = await ctx.model.query(`
+SELECT  fs.[GoodsId] goodsid
+FROM order_review.dbo.FunctionSetting AS fs WHERE   (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid) 
+`,  { replacements: { shopid: payload.shopid, functionid: parseInt(payload.functionid) }, type: ctx.model.QueryTypes.SELECT })
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx, res: fs})
+  }
 
   async functionSetting() {
     const { ctx } = this

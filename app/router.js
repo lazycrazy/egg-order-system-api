@@ -4,7 +4,7 @@
  */
 module.exports = app => {
   const { router, controller } = app
-  router.get('/', controller.home.index)
+  // router.get('/', controller.home.index)
 
   // role
   // router.post('/api/role', controller.role.create)
@@ -17,6 +17,7 @@ module.exports = app => {
 
   router.get('/api/query/shop', app.jwt, controller.query.shop)
   router.post('/api/query/functionSetting', app.jwt, controller.query.functionSetting)
+  router.post('/api/query/goodsIdsBySF', app.jwt, controller.query.goodsIdsBySF)
   router.get('/api/query/shopGoods/:shopid', app.jwt, controller.query.shopGoods)
   router.get('/api/query/orderProperty', app.jwt, controller.query.orderProperty)
   router.get('/api/query/rolePermission', app.jwt, controller.query.rolePermission)
@@ -65,4 +66,8 @@ module.exports = app => {
   router.get('/api/upload', app.jwt, controller.upload.index)
   router.delete('/api/upload', app.jwt, controller.upload.removes)
   // router.resources('upload', '/api/upload', controller.upload)
+
+
+
+  router.get('*', controller.home.index)
 }

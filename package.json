@@ -1,5 +1,5 @@
 {
-  "name": "egg-RESTfulAPI",
+  "name": "order-system-server",
   "version": "1.0.0",
   "description": "A optimized Node.js RESTful API Server Template based on egg.js!",
   "private": true,
