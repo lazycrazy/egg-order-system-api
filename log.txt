@@ -16,13 +16,55 @@ SET @shopid = (select ShopID from mySHOPSHStock..PurchaseAsk0 where SheetID=@she
 SET @qty = (select Qty from mySHOPSHStock..[PurchaseAskItem0] where SheetID=@sheetid and @goodsid = [GoodsID])
 if(isnull(@qty,0) <=0) 
   return @rs
- --各种校验
+
+--订货属性值判断
+ --1 店铺
  if ((select count(1) from [dbo].[OrderControl] where [TypeID]=1 and code=@shopid and [forbidden]=1)>0)   
-  set @rs = @rs + '此店不允许订货'+CHAR(13)+CHAR(10)
+  set @rs = @rs + '此店不允许订货'
 return @rs
+
+--2 销售属性
+ if ((select count(1) from [dbo].[OrderControl] where [TypeID]=2 and code=@shopid and [forbidden]=1)>0)   
+  set @rs = @rs + '此店不允许订货'
+  return @rs
+  --3 毛利属性
+ if ((select count(1) from [dbo].[OrderControl] where [TypeID]=3 and code=@shopid and [forbidden]=1)>0)   
+  set @rs = @rs + '此店不允许订货'
+  return @rs
+  --4 品类店型组
+ if ((select count(1) from [dbo].[OrderControl] where [TypeID]=4 and code=@shopid and [forbidden]=1)>0)   
+  set @rs = @rs + '此店不允许订货'
+  return @rs
+
   if(1=1)
-  set @rs = @rs + '有错2'+CHAR(13)+CHAR(10)
-  --用户审批权限属性值  
+  set @rs = @rs + '有错2'
+    return @rs
+
+
+  --用户审批权限属性值 判断
+ declare 
+@multiple numeric(10,2),--倍数
+@num numeric(10,2),--数量
+@amt money,--金额
+@limitnum numeric(10,2),--每日数量上线
+@limitamt money--每日金额上限
+
+select 
+@multiple=isnull(fs.ordermultiple,0) ,
+@num=isnull(fs.[OrderNum],0),
+@amt=isnull(fs.[OrderAmt],0),  
+@limitnum=isnull(fs.[DayUpperlimit] ,0), 
+@limitamt=isnull(fs.[DayUpperlimitAmt],0) 
+ from [dbo].[FunctionSetting] fs join [dbo].[OrgRoleVSFunction] rf on 
+fs.FunctionId = rf.FunctionId and fs.ShopId = @shopid 
+join mySHOPSHConnect..PartMember pm on 
+rf.OrgRoleID = pm.PartID and pm.LoginID = @userid
+
+--
+if(@qty > @num)
+  set @rs = @rs + '数量不能大于' + convert(varchar,@num)
+    return @rs
+
 
 RETURN   @rs   
 END
