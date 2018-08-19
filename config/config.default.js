@@ -37,7 +37,7 @@ module.exports = appInfo => {
   config.bodyParser = {
     jsonLimit: '2mb'
   }
-
+  
   config.sequelize = {
     dialect: 'mssql', // support: mysql, mariadb, postgres, mssql
     database: 'order_review',
@@ -45,6 +45,11 @@ module.exports = appInfo => {
     port: 3483,
     username: 'sa',
     password: 'sa',
+    dialectOptions: {
+      options: {
+        tdsVersion: '7_2'
+      }
+    }
   }
 
   return config

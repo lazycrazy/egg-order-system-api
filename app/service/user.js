@@ -83,11 +83,17 @@ class UserService extends Service {
 
   // Commons======================================================================================================>
   async findByName(name) {
-    return this.ctx.model.User.findOne({where:{Name: name}})
+    const users = await this.ctx.model.User.findAll({where:{Name: name}, raw: true})
+    if(users.length === 0)
+      return null
+    return users[0]
   }
 
   async find(id) {
-    return this.ctx.model.User.findOne({where:{LoginID: id}, raw: true})
+    const users = await this.ctx.model.User.findAll({where:{LoginID: id}, raw: true})
+    if(users.length === 0)
+      return null
+    return users[0]
   }
 
   async changePassword(id, password) {

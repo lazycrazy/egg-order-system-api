@@ -60,11 +60,21 @@ fs.FunctionId = rf.FunctionId and fs.ShopId = @shopid
 join mySHOPSHConnect..PartMember pm on 
 rf.OrgRoleID = pm.PartID and pm.LoginID = @userid
 
---
+
+--倍数 与 数量比较
 if(@qty > @num)
   set @rs = @rs + '数量不能大于' + convert(varchar,@num)
-    return @rs
+return @rs
 
+--数量 与 数量比较
+if(@qty > @num)
+  set @rs = @rs + '数量不能大于' + convert(varchar,@num)
+return @rs
+
+--金额比较
+if(@qty > @num)
+  set @rs = @rs + '数量不能大于' + convert(varchar,@num)
+return @rs
 
 RETURN   @rs   
 END
@@ -72,3 +82,19 @@ GO
 
 SELECT   dbo.F_CheckPurchaseItem('1111111111111111',1,1)  as a
  
+
+
+--总部店铺
+ select * from mySHOPSHStock..Shop  where ShopType in (11,13) and Enable =1
+ --店铺店铺
+ config表  Name=本店号
+
+ logtime
+
+
+select * from mySHOPSHStock..MinOrder --普通商品
+select * from mySHOPSHStock..GoodsPKNum --配送商品
+
+
+总部库名和店铺库名不一致，需要区分开
+tv 909 593 896  6g8n6c
