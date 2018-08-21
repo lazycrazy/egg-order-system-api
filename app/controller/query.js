@@ -5,12 +5,23 @@ class QueryController extends Controller {
     super(ctx)
   }
 
+  async shopServerInfo() {
+    const { ctx } = this
+    const payload = ctx.request.body || {}
+    const res = await ctx.model.query(`
+SELECT  * 
+FROM ${this.config.DBOrderReview}.dbo.[ShopServerInfo] 
+`,  { replacements: { }, type: ctx.model.QueryTypes.SELECT })
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx, res})
+  }
+
   async goodsIdsBySF() {
     const { ctx } = this
     const payload = ctx.request.body
     const fs = await ctx.model.query(`
 SELECT  fs.[GoodsId] goodsid
-FROM order_review.dbo.FunctionSetting AS fs WHERE   (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid) 
+FROM ${this.config.DBOrderReview}.dbo.FunctionSetting AS fs WHERE   (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid) 
 `,  { replacements: { shopid: payload.shopid, functionid: parseInt(payload.functionid) }, type: ctx.model.QueryTypes.SELECT })
     // 设置响应内容和响应状态码
     ctx.helper.success({ctx, res: fs})
@@ -25,18 +36,18 @@ FROM    (
 SELECT ROW_NUMBER() OVER ( ORDER BY fs.GoodsId ) AS RowNum,fs.FunctionId, fs.ShopId, fs.GoodsId, fs.DeptId, fs.ordermultiple, fs.OrderNum, fs.OrderAmt, fs.DayUpperlimit, 
                 fs.DayUpperlimitAmt, fs.LastModifyDT, g.BarcodeID AS barcodeid, g.Name AS goodsname, s.Name AS shopname, 
                 d.Name AS deptname
-FROM      FunctionSetting AS fs INNER JOIN
-                mySHOPSHStock.dbo.Goods AS g ON fs.GoodsId = g.GoodsID INNER JOIN
-                mySHOPSHStock.dbo.Shop AS s ON fs.ShopId = s.ID LEFT OUTER JOIN
-                mySHOPSHStock.dbo.Dept AS d ON fs.DeptId = d.ID
+FROM      ${this.config.DBOrderReview}.dbo.FunctionSetting AS fs INNER JOIN
+                ${this.config.DBStock}.dbo.Goods AS g ON fs.GoodsId = g.GoodsID INNER JOIN
+                ${this.config.DBStock}.dbo.Shop AS s ON fs.ShopId = s.ID LEFT OUTER JOIN
+                ${this.config.DBStock}.dbo.Dept AS d ON fs.DeptId = d.ID
 WHERE   (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)) as resultRows
 WHERE   RowNum between :index and :count
 ORDER BY RowNum
 `,  { replacements: { shopid: payload.shopid, functionid: parseInt(payload.funcid), index: (payload.curpage - 1) * payload.pagesize + 1, count: (payload.curpage) * payload.pagesize}, type: ctx.model.QueryTypes.SELECT })
     const rs = await ctx.model.query(`SELECT count(1) value
-FROM      FunctionSetting AS fs INNER JOIN
-                mySHOPSHStock.dbo.Goods AS g ON fs.GoodsId = g.GoodsID INNER JOIN
-                mySHOPSHStock.dbo.Shop AS s ON fs.ShopId = s.ID 
+FROM      ${this.config.DBOrderReview}.dbo.FunctionSetting AS fs INNER JOIN
+                ${this.config.DBStock}.dbo.Goods AS g ON fs.GoodsId = g.GoodsID INNER JOIN
+                ${this.config.DBStock}.dbo.Shop AS s ON fs.ShopId = s.ID 
 WHERE   (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)`,  { replacements: { shopid: payload.shopid, functionid: parseInt(payload.funcid) }, type: ctx.model.QueryTypes.SELECT })
     ctx.logger.debug('fs:'+JSON.stringify(fs))
     ctx.logger.debug('rs'+JSON.stringify(rs))
@@ -69,13 +80,13 @@ WHERE   (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)`,  { replacement
                                            RTRIM(z.Name) AS z_name, CAST(LEFT(g.DeptID, 3) AS int) AS da_id, RTRIM(da.Name) AS da_name, 
                                            CAST(LEFT(g.DeptID, 2) AS int) AS k_id, RTRIM(k.Name) AS k_name, CAST(LEFT(g.DeptID, 1) AS int) 
                                            AS b_id, RTRIM(b.Name) AS b_name
-                           FROM      mySHOPSHStock.dbo.GoodsShop AS gs INNER JOIN
-                                           mySHOPSHStock.dbo.Goods AS g ON gs.GoodsID = g.GoodsID LEFT OUTER JOIN
-                                           mySHOPSHStock.dbo.Dept AS d ON g.DeptID = d.ID LEFT OUTER JOIN
-                                           mySHOPSHStock.dbo.SGroup AS z ON z.ID = LEFT(g.DeptID, 4) LEFT OUTER JOIN
-                                           mySHOPSHStock.dbo.SGroup AS da ON da.ID = LEFT(g.DeptID, 3) LEFT OUTER JOIN
-                                           mySHOPSHStock.dbo.SGroup AS k ON k.ID = LEFT(g.DeptID, 2) LEFT OUTER JOIN
-                                           mySHOPSHStock.dbo.SGroup AS b ON b.ID = LEFT(g.DeptID, 1)
+                           FROM      ${this.config.DBStock}.dbo.GoodsShop AS gs INNER JOIN
+                                           ${this.config.DBStock}.dbo.Goods AS g ON gs.GoodsID = g.GoodsID LEFT OUTER JOIN
+                                           ${this.config.DBStock}.dbo.Dept AS d ON g.DeptID = d.ID LEFT OUTER JOIN
+                                           ${this.config.DBStock}.dbo.SGroup AS z ON z.ID = LEFT(g.DeptID, 4) LEFT OUTER JOIN
+                                           ${this.config.DBStock}.dbo.SGroup AS da ON da.ID = LEFT(g.DeptID, 3) LEFT OUTER JOIN
+                                           ${this.config.DBStock}.dbo.SGroup AS k ON k.ID = LEFT(g.DeptID, 2) LEFT OUTER JOIN
+                                           ${this.config.DBStock}.dbo.SGroup AS b ON b.ID = LEFT(g.DeptID, 1)
                            WHERE   (gs.Flag IN (0, 8)) AND (gs.ShopID = :shopid))
     SELECT   type, id, label, pid
     FROM      (SELECT DISTINCT 1 AS type, b_id AS id, b_name AS label, NULL AS pid
@@ -104,7 +115,7 @@ WHERE   (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)`,  { replacement
   async shop() {
     const { ctx } = this
     const shops = await ctx.model.query(`SELECT a.ID value, RTRIM(a.Name) AS label
-FROM      mySHOPSHStock.dbo.Shop as a
+FROM      ${this.config.DBStock}.dbo.Shop as a
 WHERE   (a.ShopType = 11)`, { type: ctx.model.QueryTypes.SELECT})
     const res = shops
     // 设置响应内容和响应状态码
@@ -114,7 +125,7 @@ WHERE   (a.ShopType = 11)`, { type: ctx.model.QueryTypes.SELECT})
  async rolePermission() {
     const { ctx } = this
     const permissions = await  ctx.model.query(`SELECT   CONVERT(bit,(CASE WHEN b.FunctionId IS NULL THEN 1 ELSE 0 END)) AS isnew, a.PartID AS roleid, a.Name AS rolename, ISNULL(b.FunctionId, 0) AS auth
-FROM      mySHOPSHConnect.dbo.Part AS a LEFT OUTER JOIN
+FROM      ${this.config.DBConnect}.dbo.Part AS a LEFT OUTER JOIN
                 OrgRoleVSFunction AS b ON b.OrgRoleID = a.PartID
 ORDER BY roleid`, { type: ctx.model.QueryTypes.SELECT}) 
     const res = permissions
@@ -127,26 +138,26 @@ ORDER BY roleid`, { type: ctx.model.QueryTypes.SELECT})
   async orderProperty() {
     const { ctx } = this
     const shops = await ctx.model.query(`SELECT CONVERT(bit,(CASE WHEN b.forbidden IS NULL THEN 1 ELSE 0 END)) AS isnew, 1 type, a.ID id, RTRIM(a.Name) AS name, CONVERT(bit, ISNULL(b.forbidden, 0)) AS forbidden
-FROM      mySHOPSHStock.dbo.Shop AS a LEFT OUTER JOIN
-                order_review.dbo.OrderControl AS b ON b.TypeID = 1 AND b.Code = a.ID
+FROM      ${this.config.DBStock}.dbo.Shop AS a LEFT OUTER JOIN
+                ${this.config.DBOrderReview}.dbo.OrderControl AS b ON b.TypeID = 1 AND b.Code = a.ID
 WHERE   (a.ShopType = 11)`, { type: ctx.model.QueryTypes.SELECT})
     ctx.logger.debug('shop list ' + JSON.stringify(shops))
     const mlsxs = await  ctx.model.query(`SELECT DISTINCT CONVERT(bit,(CASE WHEN b.forbidden IS NULL THEN 1 ELSE 0 END)) AS isnew, 2 type, a.EName AS id, a.EName AS name, CONVERT(bit, ISNULL(b.forbidden, 0)) AS forbidden
-FROM      mySHOPSHStock.dbo.Goods AS a LEFT OUTER JOIN
-                order_review.dbo.OrderControl AS b ON b.TypeID = 2 AND b.Code = a.EName
+FROM      ${this.config.DBStock}.dbo.Goods AS a LEFT OUTER JOIN
+                ${this.config.DBOrderReview}.dbo.OrderControl AS b ON b.TypeID = 2 AND b.Code = a.EName
 WHERE   (a.EName IS NOT NULL) AND (LEN(a.EShortName) < 4)
 order by a.ename`, { type: ctx.model.QueryTypes.SELECT}) 
     const xssxs = await  ctx.model.query(`SELECT DISTINCT CONVERT(bit,(CASE WHEN b.forbidden IS NULL THEN 1 ELSE 0 END)) AS isnew, 3 type,a.EShortName AS id, a.EShortName AS name, CONVERT(bit, ISNULL(b.forbidden, 0)) AS forbidden
-FROM      mySHOPSHStock.dbo.Goods AS a LEFT OUTER JOIN
-                order_review.dbo.OrderControl AS b ON b.TypeID = 3 AND b.Code = a.EShortName
+FROM      ${this.config.DBStock}.dbo.Goods AS a LEFT OUTER JOIN
+                ${this.config.DBOrderReview}.dbo.OrderControl AS b ON b.TypeID = 3 AND b.Code = a.EShortName
 WHERE   (a.EShortName IS NOT NULL) AND (LEN(a.EShortName) < 4)
 ORDER BY id`, { type: ctx.model.QueryTypes.SELECT}) 
     const pldxzs = await  ctx.model.query(`SELECT CONVERT(bit,(CASE WHEN d.forbidden IS NULL THEN 1 ELSE 0 END)) AS isnew, 4 type, a.Shopid + '-' + CONVERT(varchar, a.Deptid) + '-' + a.SkuType AS id, b.Name AS storename, c.Name AS deptname, 
                 a.SkuType skutype, CONVERT(bit, ISNULL(d.forbidden, 0)) AS forbidden
-FROM      mySHOPSHStock.dbo.hy_deptsku AS a LEFT OUTER JOIN
-                mySHOPSHStock.dbo.Shop AS b ON a.Shopid = b.ID LEFT OUTER JOIN
-                mySHOPSHStock.dbo.Dept AS c ON a.Deptid = c.ID LEFT OUTER JOIN
-                order_review.dbo.OrderControl AS d ON d.TypeID = 4 AND d.Code = a.Shopid + '-' + CONVERT(varchar, a.Deptid) 
+FROM      ${this.config.DBStock}.dbo.hy_deptsku AS a LEFT OUTER JOIN
+                ${this.config.DBStock}.dbo.Shop AS b ON a.Shopid = b.ID LEFT OUTER JOIN
+                ${this.config.DBStock}.dbo.Dept AS c ON a.Deptid = c.ID LEFT OUTER JOIN
+                ${this.config.DBOrderReview}.dbo.OrderControl AS d ON d.TypeID = 4 AND d.Code = a.Shopid + '-' + CONVERT(varchar, a.Deptid) 
                 + '-' + a.SkuType
 ORDER BY storename, a.SkuType, deptname`, { type: ctx.model.QueryTypes.SELECT}) 
     const res = {shops, mlsxs, xssxs, pldxzs}

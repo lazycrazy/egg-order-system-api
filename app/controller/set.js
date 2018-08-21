@@ -31,14 +31,14 @@ class SetController extends Controller {
   async functionSettingNew() {
     const { ctx } = this
     const obj = ctx.request.body || {}
-    const isql = `INSERT INTO order_review.dbo.FunctionSetting
+    const isql = `INSERT INTO ${this.config.DBOrderReview}.dbo.FunctionSetting
                 (FunctionId, ShopId, GoodsId, DeptId, ordermultiple, OrderNum, OrderAmt, DayUpperlimit, DayUpperlimitAmt, 
                 LastModifyDT)
 SELECT :functionid, :shopid, GoodsID, DeptID, :ordermultiple, :ordernum, 
                 :orderamt, :dayupperlimit, :dayupperlimitamt, GETDATE()  
-FROM      mySHOPSHStock.dbo.Goods
+FROM      ${this.config.DBStock}.dbo.Goods
 WHERE   (GoodsID IN (:gids))`
-    const usql = `update order_review.dbo.[FunctionSetting]
+    const usql = `update ${this.config.DBOrderReview}.dbo.[FunctionSetting]
    SET [ordermultiple] = :ordermultiple
       ,[OrderNum] = :ordernum
       ,[OrderAmt] = :orderamt
@@ -116,17 +116,17 @@ WHERE   (GoodsID IN (:gids))`
  async functionSettingByShop() {
     const { ctx } = this
     const obj = ctx.request.body || {}
-    const isql = `INSERT INTO [order_review]..FunctionSetting
+    const isql = `INSERT INTO ${this.config.DBOrderReview}..FunctionSetting
                 (FunctionId, ShopId, GoodsId, DeptId, ordermultiple, OrderNum, OrderAmt, DayUpperlimit, DayUpperlimitAmt, 
                 LastModifyDT)
 SELECT   fs.FunctionId, s.ID, fs.GoodsId, fs.DeptId, fs.ordermultiple, fs.OrderNum, fs.OrderAmt, fs.DayUpperlimit, 
                 fs.DayUpperlimitAmt, GETDATE() 
-FROM      [order_review]..FunctionSetting AS fs CROSS JOIN
+FROM      ${this.config.DBOrderReview}..FunctionSetting AS fs CROSS JOIN
                     (SELECT   ID
-                     FROM      mySHOPSHStock.dbo.Shop
+                     FROM      ${this.config.DBStock}.dbo.Shop
                      WHERE   (ID IN (:shops))) AS s
 WHERE   (fs.ShopId = :curshop)`
-    const dsql = `delete from order_review.dbo.FunctionSetting
+    const dsql = `delete from ${this.config.DBOrderReview}.dbo.FunctionSetting
  WHERE ShopId in (:shops)`
     return ctx.model.transaction(async function (t) {
       const resd = await ctx.model.query(dsql, { transaction: t, replacements: obj, type:ctx.model.QueryTypes.DELETE})
@@ -146,7 +146,7 @@ WHERE   (fs.ShopId = :curshop)`
   async functionSetting() {
   	const { ctx } = this
     const obj = ctx.request.body || {}
-    const isql = `insert into order_review.dbo.[FunctionSetting]
+    const isql = `insert into ${this.config.DBOrderReview}.dbo.[FunctionSetting]
            ([FunctionId]
            ,[ShopId]
            ,[GoodsId]
@@ -167,7 +167,7 @@ WHERE   (fs.ShopId = :curshop)`
            :dayupperlimit,
            :dayupperlimitamt,
            getdate())`
-    const usql = `update order_review.dbo.[FunctionSetting]
+    const usql = `update ${this.config.DBOrderReview}.dbo.[FunctionSetting]
    SET [DeptId] = :deptId
       ,[ordermultiple] = :ordermultiple
       ,[OrderNum] = :ordernum
@@ -215,7 +215,7 @@ WHERE   (fs.ShopId = :curshop)`
 
     const obj = ctx.request.body || {}
     ctx.logger.debug('obj ： ' + JSON.stringify(obj))
-    let sql = `delete from order_review.dbo.[FunctionSetting] where ShopId=:shopid and FunctionId=:functionid and GoodsId=:goodsid`
+    let sql = `delete from ${this.config.DBOrderReview}.dbo.[FunctionSetting] where ShopId=:shopid and FunctionId=:functionid and GoodsId=:goodsid`
     const type = ctx.model.QueryTypes.DELETE
     const res = await ctx.model.query(sql,  { replacements: {  shopid: obj.shopid, 
           functionid: obj.functionid, 
@@ -226,13 +226,25 @@ WHERE   (fs.ShopId = :curshop)`
     ctx.helper.success({ctx, res})
   }
 
+  async shopNeed3ReviewCount() {
+    const { ctx } = this
+
+    const obj = ctx.request.body || {}
+    let sql = `update   ${this.config.DBOrderReview}.[dbo].[ShopServerInfo] set [Need3ReviewCount] = :count where ShopId=:shopid `
+    const type = ctx.model.QueryTypes.UPDATE
+    const res = await ctx.model.query(sql,  { replacements: {  shopid: obj.shopid, 
+          count: obj.count}, type})    
+
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx, res})
+  }
 
   async rolePermission() {
     const { ctx } = this
 
     const payload = ctx.request.body || {}
-    let sql = payload.isnew ? `insert into order_review.dbo.OrgRoleVSFunction(OrgRoleID,FunctionId) 
-    values (:roleid,:functionid)` : `update order_review.dbo.OrgRoleVSFunction set FunctionId=:functionid
+    let sql = payload.isnew ? `insert into ${this.config.DBOrderReview}.dbo.OrgRoleVSFunction(OrgRoleID,FunctionId) 
+    values (:roleid,:functionid)` : `update ${this.config.DBOrderReview}.dbo.OrgRoleVSFunction set FunctionId=:functionid
     where OrgRoleID=:roleid and FunctionId=:auth_bak`
     const type = payload.isnew ? ctx.model.QueryTypes.INSERT : ctx.model.QueryTypes.UPDATE
     const res = await ctx.model.query(sql,  { replacements: {roleid: payload.roleid, functionid: payload.auth, auth_bak: payload.auth_bak}, type})
@@ -248,8 +260,8 @@ WHERE   (fs.ShopId = :curshop)`
     const { ctx } = this
 
     const payload = ctx.request.body || {}
-    let sql = payload.isnew ? `insert into order_review.dbo.OrderControl(typeid,code,forbidden) 
-    values (:typeid,:code,:forbidden)` : `update order_review.dbo.OrderControl set forbidden=:forbidden, LastModifyDT=getdate() 
+    let sql = payload.isnew ? `insert into ${this.config.DBOrderReview}.dbo.OrderControl(typeid,code,forbidden) 
+    values (:typeid,:code,:forbidden)` : `update ${this.config.DBOrderReview}.dbo.OrderControl set forbidden=:forbidden, LastModifyDT=getdate() 
     where typeid=:typeid and code=:code`
     const type = payload.isnew ? ctx.model.QueryTypes.INSERT : ctx.model.QueryTypes.UPDATE
     const res = await ctx.model.query(sql,  { replacements: {typeid: payload.type, code: payload.id, forbidden: !payload.allowOrder}, type})

@@ -98,3 +98,5 @@ select * from mySHOPSHStock..GoodsPKNum --配送商品
 
 总部库名和店铺库名不一致，需要区分开
 tv 909 593 896  6g8n6c
+路由记住数据
+总部和店铺的库名区分

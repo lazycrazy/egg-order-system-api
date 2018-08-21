@@ -21,6 +21,7 @@ module.exports = app => {
   router.get('/api/query/shopGoods/:shopid', app.jwt, controller.query.shopGoods)
   router.get('/api/query/orderProperty', app.jwt, controller.query.orderProperty)
   router.get('/api/query/rolePermission', app.jwt, controller.query.rolePermission)
+  router.get('/api/query/shopServerInfo', app.jwt, controller.query.shopServerInfo)
 
 
   // query
@@ -67,7 +68,9 @@ module.exports = app => {
   router.delete('/api/upload', app.jwt, controller.upload.removes)
   // router.resources('upload', '/api/upload', controller.upload)
 
-
+  if(app.config.IsHQ){
+    router.post('/api/set/shopNeed3ReviewCount', controller.set.shopNeed3ReviewCount)
+  }
 
   router.get('*', controller.home.index)
 }

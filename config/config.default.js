@@ -1,8 +1,17 @@
 module.exports = appInfo => {
   const config = exports = {}
+  config.SYS = 'HQ' //'HQ'  'SC'
+  config.IsHQ = config.SYS === 'HQ'
+  config.IsSC = config.SYS === 'SC'
+  config.DBConnect = config.IsHQ ? 'mySHOPHQConnect' : 'mySHOPSHConnect'
+  config.DBStock = config.IsHQ ? 'mySHOPHQStock' : 'mySHOPSHStock'
+  config.DBOrderReview = config.SYS.toLowerCase() + 'OrderReview'
+  config.Upload3ReviewCount = '1m'
+
+
 
   // use for cookie sign key, should change to your own and keep security
-  config.keys = appInfo.name + '_1513779989145_1674'
+  config.keys = appInfo.name + '_15810923947_9527'
 
   // add your config here
   // 加载 errorHandler 中间件
@@ -40,7 +49,7 @@ module.exports = appInfo => {
   
   config.sequelize = {
     dialect: 'mssql', // support: mysql, mariadb, postgres, mssql
-    database: 'order_review',
+    database: config.DBOrderReview,
     host: 'localhost',
     port: 3483,
     username: 'sa',
