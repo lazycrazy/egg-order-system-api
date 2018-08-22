@@ -55,10 +55,12 @@
     username: 'sa',
     password: 'sa',
     dialectOptions: {
+      useUTC: false,
       options: {
         tdsVersion: '7_2'
       }
-    }
+    },
+    timezone: '+08:00'
   }
 
   return config

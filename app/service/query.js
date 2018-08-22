@@ -11,7 +11,7 @@ SELECT   Value AS shopid,
                      WHERE   EXISTS
                                          (SELECT   1 AS Expr1
                                           FROM      ${this.config.DBOrderReview}.dbo.PurchaseControlItemLogs AS l
-                                          WHERE   (pa.SheetID = SheetID) AND (l.GoodsID = -21))) AS count
+                                          WHERE   (pa.SheetID = SheetID) AND (l.serialid = 12))) AS count
 FROM      ${this.config.DBStock}.dbo.Config AS c
 WHERE   (Name = '本店号') 
 `,  { replacements: { }, type: ctx.model.QueryTypes.SELECT })

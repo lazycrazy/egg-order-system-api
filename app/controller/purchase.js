@@ -117,10 +117,15 @@ INSERT INTO ${this.config.DBOrderReview}.[dbo].[PurchaseControlItemLogs]
            ([LogTime]
            ,[LogUserID]
            ,[LogDesc]
-           ,[SheetID])
+           ,[SheetID]
+           ,[serialid])
      VALUES
-           (getdate(),:userid,:desc,:sheetid)
-`,  { replacements: { userid: ctx.state.user.data._id, desc: payload.desc, sheetid: payload.sheetid }, type: ctx.model.QueryTypes.INSERT })
+           (getdate(),:userid,:desc,:sheetid,:auth)
+`,  { replacements: { userid: ctx.state.user.data._id, 
+    desc: payload.desc, 
+    sheetid: payload.sheetid, 
+    auth: payload.auth 
+  }, type: ctx.model.QueryTypes.INSERT })
     ctx.logger.debug(res)
     ctx.helper.success({ ctx, res })
   }
