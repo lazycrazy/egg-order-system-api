@@ -9,8 +9,10 @@ class QueryController extends Controller {
     const { ctx } = this
     const payload = ctx.request.body || {}
     const res = await ctx.model.query(`
-SELECT  * 
-FROM ${this.config.DBOrderReview}.dbo.[ShopServerInfo] 
+SELECT   ssi.ShopId, ssi.ServerUrl, ssi.Need3ReviewCount, s.Name AS shopname
+FROM      ${this.config.DBOrderReview}.dbo.ShopServerInfo AS ssi LEFT OUTER JOIN
+                ${this.config.DBStock}.dbo.Shop AS s ON ssi.ShopId = s.ID
+ORDER BY ssi.Need3ReviewCount DESC
 `,  { replacements: { }, type: ctx.model.QueryTypes.SELECT })
     // 设置响应内容和响应状态码
     ctx.helper.success({ctx, res})

@@ -3,7 +3,7 @@ drop function F_CheckPurchaseItem;
 USE order_review 
 GO
 --单号,商品id,操作人
-CREATE  FUNCTION F_CheckPurchaseItem(@sheetid char(16),@goodsid int,@userid int)
+CREATE  FUNCTION F_CheckPurchaseItem(@sheetid char(16),@goodsid int,@auth int)
 returns nvarchar(256) --没有问题的返回'',有问题返回原因 
 AS
 BEGIN
