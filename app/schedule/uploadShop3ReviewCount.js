@@ -3,7 +3,7 @@ module.exports = app => {
     schedule: {
       interval: app.config.Upload3ReviewCount,
       type: 'worker',
-      disable: app.IsHQ
+      disable: app.config.IsHQ
     },
     async task(ctx) {
       const shopinfo = await ctx.service.query.shop3ReviewCount()

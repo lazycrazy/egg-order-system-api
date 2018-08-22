@@ -9,7 +9,7 @@ class QueryController extends Controller {
     const { ctx } = this
     const payload = ctx.request.body || {}
     const res = await ctx.model.query(`
-SELECT   ssi.ShopId, ssi.ServerUrl, ssi.Need3ReviewCount, s.Name AS shopname
+SELECT   ssi.ShopId, ssi.ServerUrl, ssi.Need3ReviewCount, s.ID + '-' + s.Name AS shopname
 FROM      ${this.config.DBOrderReview}.dbo.ShopServerInfo AS ssi LEFT OUTER JOIN
                 ${this.config.DBStock}.dbo.Shop AS s ON ssi.ShopId = s.ID
 ORDER BY ssi.Need3ReviewCount DESC
@@ -114,11 +114,35 @@ WHERE   (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)`,  { replacement
     ctx.helper.success({ctx, res})
   }
 
+async shopServerUrl() {
+    const { ctx } = this
+    const payload = ctx.params
+
+    const url = await ctx.model.query(`select [ServerUrl] 
+     FROM ${this.config.DBOrderReview}.[dbo].[ShopServerInfo] where ShopId = :shopid`, { replacements: { shopid: payload.shopid}, type: ctx.model.QueryTypes.SELECT })
+    const res = url
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx, res})
+  }
+
   async shop() {
     const { ctx } = this
-    const shops = await ctx.model.query(`SELECT a.ID value, RTRIM(a.Name) AS label
+    const shops = await ctx.model.query(`SELECT a.ID value, a.ID+'-'+RTRIM(a.Name) AS label
 FROM      ${this.config.DBStock}.dbo.Shop as a
-WHERE   (a.ShopType = 11)`, { type: ctx.model.QueryTypes.SELECT})
+WHERE    a.ShopType in (11,13) and a.Enable =1`, { type: ctx.model.QueryTypes.SELECT})
+    const res = shops
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx, res})
+  }
+
+  async curshop() {
+    const { ctx } = this
+    let sql = `SELECT a.ID value, a.ID+'-'+RTRIM(a.Name) AS label
+FROM      ${this.config.DBStock}.dbo.Shop as a
+WHERE   a.ShopType in (11,13) and a.Enable =1`
+    if(this.config.IsSC)
+      sql += ` and exists (select 1 from ${this.config.DBStock}.dbo.config c where c.Name='本店号' and c.value =a.ID)`
+    const shops = await ctx.model.query(sql, { type: ctx.model.QueryTypes.SELECT})
     const res = shops
     // 设置响应内容和响应状态码
     ctx.helper.success({ctx, res})

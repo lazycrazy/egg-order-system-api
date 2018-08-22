@@ -1,4 +1,4 @@
-module.exports = appInfo => {
+﻿module.exports = appInfo => {
   const config = exports = {}
   config.SYS = 'HQ' //'HQ'  'SC'
   config.IsHQ = config.SYS === 'HQ'
@@ -26,7 +26,7 @@ module.exports = appInfo => {
     csrf: {
       enable: false,
     },
-    domainWhiteList: [ 'http://localhost:9527' ],
+    domainWhiteList: [ 'localhost:9527', 'localhost:9528'  ],
   }
 
   config.multipart = {

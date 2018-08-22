@@ -15,7 +15,9 @@ module.exports = app => {
   router.delete('/api/role', app.jwt, controller.role.removes)
   router.resources('role', '/api/role', app.jwt, controller.role)
 
+  router.get('/api/query/shopServerUrl/:shopid', app.jwt, controller.query.shopServerUrl)
   router.get('/api/query/shop', app.jwt, controller.query.shop)
+  router.get('/api/query/curshop', app.jwt, controller.query.curshop)
   router.post('/api/query/functionSetting', app.jwt, controller.query.functionSetting)
   router.post('/api/query/goodsIdsBySF', app.jwt, controller.query.goodsIdsBySF)
   router.get('/api/query/shopGoods/:shopid', app.jwt, controller.query.shopGoods)
