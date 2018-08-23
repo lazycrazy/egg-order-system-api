@@ -72,6 +72,7 @@ module.exports = app => {
 
   if(app.config.IsHQ){
     router.post('/api/set/shopNeed3ReviewCount', controller.set.shopNeed3ReviewCount)
+    router.post('/api/set/functionSettingImport', app.jwt, controller.set.functionSettingImport)
   }
 
   router.get('*', controller.home.index)

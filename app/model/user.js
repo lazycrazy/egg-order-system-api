@@ -19,11 +19,11 @@ module.exports = app => {
     });
 
     User.findByMobile = async(mobile) => {
-        return await this.findOne({
-            where: {
-                Name: mobile
-            }
-        });
+        // return await this.findOne({
+        //     where: {
+        //         Name: mobile
+        //     }
+        // });
     }
 
     return User;

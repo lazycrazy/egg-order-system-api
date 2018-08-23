@@ -96,6 +96,50 @@ WHERE   (GoodsID IN (:gids))`
       throw err
     });
   }
+
+  async functionSettingImport() {
+    const { ctx } = this
+    const obj = ctx.request.body || {}
+    const isql = `INSERT INTO ${this.config.DBOrderReview}.dbo.FunctionSetting
+                (FunctionId, ShopId, GoodsId, DeptId, ordermultiple, OrderNum, OrderAmt, DayUpperlimit, DayUpperlimitAmt, LastModifyDT)
+SELECT   col1, col2, col3, g.DeptID, col4, col5, col6, col7, col8, GETDATE()
+FROM  ${this.config.DBOrderReview}.dbo.FunctionSettingImport AS fsi LEFT OUTER JOIN
+                ${this.config.DBStock}.dbo.Goods AS g ON fsi.col3 = g.GoodsID
+WHERE   (NOT EXISTS
+                    (SELECT   1 AS Expr1
+                     FROM  ${this.config.DBOrderReview}.dbo.FunctionSetting AS fs
+                     WHERE   (FunctionId = fsi.col1) AND (ShopId = fsi.col2) AND (GoodsId = fsi.col3)))`
+    const usql = `UPDATE  fs
+SET         fs.ordermultiple = fsi.Col4, fs.OrderNum = fsi.Col5, fs.OrderAmt = fsi.Col6, fs.DayUpperlimit = fsi.Col7, 
+                fs.DayUpperlimitAmt = fsi.Col8, fs.LastModifyDT = GETDATE()
+FROM      ${this.config.DBOrderReview}.dbo.FunctionSetting AS fs INNER JOIN
+          ${this.config.DBOrderReview}.dbo.FunctionSettingImport AS fsi ON fs.FunctionId = fsi.Col1 AND fs.ShopId = fsi.Col2 AND fs.GoodsId = fsi.Col3 `
+    const dsql = `delete from ${this.config.DBOrderReview}.dbo.FunctionSettingImport `
+    return ctx.model.transaction(async function (t) {
+      //delete 
+    await ctx.model.query(dsql, { transaction: t, type: ctx.model.QueryTypes.DELETE })
+           
+      //insert
+    await ctx.model.FunctionSettingImport.bulkCreate(obj.data,{ transaction: t })
+     
+    var ures = await ctx.model.query(usql, { transaction: t, type: ctx.model.QueryTypes.UPDATE })
+    var iires = await ctx.model.query(isql, { transaction: t, type: ctx.model.QueryTypes.INSERT })
+    // ctx.logger.debug(JSON.stringify(dres))
+    // ctx.logger.debug(JSON.stringify(ires))
+    ctx.logger.debug(JSON.stringify(ures))
+    ctx.logger.debug(JSON.stringify(iires))
+
+      return [ures[1], iires[1]] 
+    }).then(function (result) {
+      // Transaction has been committed
+      // result is whatever the result of the promise chain returned to the transaction callback
+        ctx.helper.success({ctx, res: result})  
+    }).catch(function (err) {
+      // Transaction has been rolled back
+      // err is whatever rejected the promise chain returned to the transaction callback
+      throw err
+    });
+  }
  
 //  (async () => {
 //   const rawResponse = await fetch('/api/set/functionSettingByShop', {
