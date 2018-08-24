@@ -125,6 +125,21 @@ async shopServerUrl() {
     ctx.helper.success({ctx, res})
   }
 
+
+ async shopTypes() {
+    const { ctx } = this
+    const shopTypes = await ctx.model.query(`
+SELECT     a.ShopID AS shoptypeid, rtrim(b.Name) AS shoptypename, a.ItemShopID AS shopid, rtrim(c.Name) AS shopname
+FROM  ${this.config.DBStock}.dbo.ShopItem AS a INNER JOIN
+      ${this.config.DBStock}.dbo.Shop AS b ON a.ShopID = b.ID INNER JOIN
+      ${this.config.DBStock}.dbo.Shop AS c ON a.ItemShopID = c.ID
+WHERE     (c.ShopType IN (11, 13)) AND (c.Enable = 1)
+`, { type: ctx.model.QueryTypes.SELECT})
+    const res = shopTypes
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx, res})
+  }
+
   async shop() {
     const { ctx } = this
     const shops = await ctx.model.query(`SELECT a.ID value, a.ID+'-'+RTRIM(a.Name) AS label
@@ -163,29 +178,46 @@ ORDER BY roleid`, { type: ctx.model.QueryTypes.SELECT})
 
   async orderProperty() {
     const { ctx } = this
-    const shops = await ctx.model.query(`SELECT CONVERT(bit,(CASE WHEN b.forbidden IS NULL THEN 1 ELSE 0 END)) AS isnew, 1 type, a.ID id, RTRIM(a.Name) AS name, CONVERT(bit, ISNULL(b.forbidden, 0)) AS forbidden
+    const sps = ctx.request.body.shops || []
+    console.log(JSON.stringify(sps))
+    const shops = await ctx.model.query(`SELECT CONVERT(bit,(CASE WHEN b.forbidden IS NULL THEN 1 ELSE 0 END)) AS isnew, 1 type, a.ID shopid, RTRIM(a.Name) AS shopname, CONVERT(bit, ISNULL(b.forbidden, 0)) AS forbidden
 FROM      ${this.config.DBStock}.dbo.Shop AS a LEFT OUTER JOIN
-                ${this.config.DBOrderReview}.dbo.OrderControl AS b ON b.TypeID = 1 AND b.Code = a.ID
-WHERE   (a.ShopType = 11)`, { type: ctx.model.QueryTypes.SELECT})
+                ${this.config.DBOrderReview}.dbo.OrderControl AS b ON 
+                b.TypeID = 1 AND b.ShopID = a.ID
+WHERE   (a.ShopType in (11,13) and a.Enable =1) and a.ID in (:sps)`, { replacements:{ sps }, type: ctx.model.QueryTypes.SELECT})
     ctx.logger.debug('shop list ' + JSON.stringify(shops))
-    const mlsxs = await  ctx.model.query(`SELECT DISTINCT CONVERT(bit,(CASE WHEN b.forbidden IS NULL THEN 1 ELSE 0 END)) AS isnew, 2 type, a.EName AS id, a.EName AS name, CONVERT(bit, ISNULL(b.forbidden, 0)) AS forbidden
-FROM      ${this.config.DBStock}.dbo.Goods AS a LEFT OUTER JOIN
-                ${this.config.DBOrderReview}.dbo.OrderControl AS b ON b.TypeID = 2 AND b.Code = a.EName
-WHERE   (a.EName IS NOT NULL) AND (LEN(a.EShortName) < 4)
-order by a.ename`, { type: ctx.model.QueryTypes.SELECT}) 
-    const xssxs = await  ctx.model.query(`SELECT DISTINCT CONVERT(bit,(CASE WHEN b.forbidden IS NULL THEN 1 ELSE 0 END)) AS isnew, 3 type,a.EShortName AS id, a.EShortName AS name, CONVERT(bit, ISNULL(b.forbidden, 0)) AS forbidden
-FROM      ${this.config.DBStock}.dbo.Goods AS a LEFT OUTER JOIN
-                ${this.config.DBOrderReview}.dbo.OrderControl AS b ON b.TypeID = 3 AND b.Code = a.EShortName
-WHERE   (a.EShortName IS NOT NULL) AND (LEN(a.EShortName) < 4)
-ORDER BY id`, { type: ctx.model.QueryTypes.SELECT}) 
-    const pldxzs = await  ctx.model.query(`SELECT CONVERT(bit,(CASE WHEN d.forbidden IS NULL THEN 1 ELSE 0 END)) AS isnew, 4 type, a.Shopid + '-' + CONVERT(varchar, a.Deptid) + '-' + a.SkuType AS id, b.Name AS storename, c.Name AS deptname, 
-                a.SkuType skutype, CONVERT(bit, ISNULL(d.forbidden, 0)) AS forbidden
-FROM      ${this.config.DBStock}.dbo.hy_deptsku AS a LEFT OUTER JOIN
-                ${this.config.DBStock}.dbo.Shop AS b ON a.Shopid = b.ID LEFT OUTER JOIN
+    const mlsxs = await  ctx.model.query(`WITH mlsx AS (SELECT DISTINCT EName
+                         FROM      ${this.config.DBStock}.dbo.Goods AS a
+                         WHERE   (EName IS NOT NULL) AND (LEN(EShortName) < 4))
+    SELECT   CONVERT(bit, (CASE WHEN o.forbidden IS NULL THEN 1 ELSE 0 END)) AS isnew, 2 type, s.ID AS shopid, 
+                    s.Name AS shopname, m.EName AS sxid, m.EName AS sxname, CONVERT(bit, ISNULL(o.forbidden, 0)) 
+                    AS forbidden
+    FROM      ${this.config.DBStock}.dbo.Shop AS s CROSS JOIN
+                    mlsx AS m LEFT OUTER JOIN
+                    ${this.config.DBOrderReview}.dbo.OrderControl AS o ON o.TypeID = 2 AND s.ID = o.ShopID AND o.Code = m.EName
+    WHERE   (s.ShopType IN (11, 13)) AND (s.Enable = 1) and s.ID in (:sps)
+    ORDER BY shopid, sxid`, { replacements:{ sps }, type: ctx.model.QueryTypes.SELECT}) 
+    const xssxs = await  ctx.model.query(`WITH xssx AS (SELECT DISTINCT EShortName
+                         FROM      ${this.config.DBStock}.dbo.Goods AS a
+                         WHERE   (EName IS NOT NULL) AND (LEN(EShortName) < 4))
+    SELECT   CONVERT(bit, (CASE WHEN o.forbidden IS NULL THEN 1 ELSE 0 END)) AS isnew, 3 type, s.ID AS shopid, 
+                    s.Name AS shopname, m.EShortName AS sxid, m.EShortName AS sxname, CONVERT(bit, ISNULL(o.forbidden, 0)) 
+                    AS forbidden
+    FROM      ${this.config.DBStock}.dbo.Shop AS s CROSS JOIN
+                    xssx AS m LEFT OUTER JOIN
+                    ${this.config.DBOrderReview}.dbo.OrderControl AS o ON o.TypeID = 3 AND s.ID = o.ShopID AND o.Code = m.EShortName
+    WHERE   (s.ShopType IN (11, 13)) AND (s.Enable = 1) and s.ID in (:sps)
+    ORDER BY shopid, sxid`, { replacements:{ sps }, type: ctx.model.QueryTypes.SELECT}) 
+    const pldxzs = await  ctx.model.query(`SELECT   CONVERT(bit, (CASE WHEN d .forbidden IS NULL THEN 1 ELSE 0 END)) AS isnew, 4 AS type, a.Shopid AS shopid, 
+                b.Name AS shopname, c.ID AS deptid, c.Name AS deptname, a.SkuType AS skutype, CONVERT(bit, ISNULL(d.forbidden, 
+                0)) AS forbidden
+FROM      ${this.config.DBStock}.dbo.hy_deptsku AS a INNER JOIN
+                ${this.config.DBStock}.dbo.Shop AS b ON a.Shopid = b.ID INNER JOIN
                 ${this.config.DBStock}.dbo.Dept AS c ON a.Deptid = c.ID LEFT OUTER JOIN
-                ${this.config.DBOrderReview}.dbo.OrderControl AS d ON d.TypeID = 4 AND d.Code = a.Shopid + '-' + CONVERT(varchar, a.Deptid) 
-                + '-' + a.SkuType
-ORDER BY storename, a.SkuType, deptname`, { type: ctx.model.QueryTypes.SELECT}) 
+                ${this.config.DBOrderReview}.dbo.OrderControl AS d ON d.TypeID = 4 AND d.ShopID = a.Shopid AND d.Code = a.Deptid AND 
+                d.SubCode = a.SkuType
+WHERE   (b.ShopType IN (11, 13)) AND (b.Enable = 1) and b.ID in (:sps)
+ORDER BY shopid, deptid, skutype`, { replacements:{ sps }, type: ctx.model.QueryTypes.SELECT}) 
     const res = {shops, mlsxs, xssxs, pldxzs}
     // 设置响应内容和响应状态码
     ctx.helper.success({ctx, res})

@@ -17,13 +17,13 @@ module.exports = app => {
 
   router.get('/api/query/shopServerUrl/:shopid', app.jwt, controller.query.shopServerUrl)
   router.get('/api/query/shop', app.jwt, controller.query.shop)
+  router.get('/api/query/shopTypes', app.jwt, controller.query.shopTypes)
   router.get('/api/query/curshop', app.jwt, controller.query.curshop)
   router.post('/api/query/functionSetting', app.jwt, controller.query.functionSetting)
   router.post('/api/query/goodsIdsBySF', app.jwt, controller.query.goodsIdsBySF)
   router.get('/api/query/shopGoods/:shopid', app.jwt, controller.query.shopGoods)
-  router.get('/api/query/orderProperty', app.jwt, controller.query.orderProperty)
+  router.post('/api/query/orderProperty', app.jwt, controller.query.orderProperty)
   router.get('/api/query/rolePermission', app.jwt, controller.query.rolePermission)
-  router.get('/api/query/shopServerInfo', app.jwt, controller.query.shopServerInfo)
 
 
   // query
@@ -71,8 +71,10 @@ module.exports = app => {
   // router.resources('upload', '/api/upload', controller.upload)
 
   if(app.config.IsHQ){
-    router.post('/api/set/shopNeed3ReviewCount', controller.set.shopNeed3ReviewCount)
+    //router.get('/api/query/shopServerInfo', app.jwt, controller.query.shopServerInfo)
     router.post('/api/set/functionSettingImport', app.jwt, controller.set.functionSettingImport)
+
+    router.post('/api/set/shopNeed3ReviewCount', controller.set.shopNeed3ReviewCount)
   }
 
   router.get('*', controller.home.index)
