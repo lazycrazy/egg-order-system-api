@@ -302,17 +302,57 @@ WHERE   (fs.ShopId = :curshop)`
 
   async orderProperty() {
     const { ctx } = this
-
     const payload = ctx.request.body || {}
-    let sql = payload.isnew ? `insert into ${this.config.DBOrderReview}.dbo.OrderControl(typeid,code,forbidden) 
-    values (:typeid,:code,:forbidden)` : `update ${this.config.DBOrderReview}.dbo.OrderControl set forbidden=:forbidden, LastModifyDT=getdate() 
-    where typeid=:typeid and code=:code`
-    const type = payload.isnew ? ctx.model.QueryTypes.INSERT : ctx.model.QueryTypes.UPDATE
-    const res = await ctx.model.query(sql,  { replacements: {typeid: payload.type, code: payload.id, forbidden: !payload.allowOrder}, type})
-    ctx.logger.debug('execute result ： ' + JSON.stringify(res))
-
-    // 设置响应内容和响应状态码
-    ctx.helper.success({ctx, res})
+    const type = payload.type
+    let isql = `insert into  ${this.config.DBOrderReview}.dbo.OrderControl(typeid,ShopID,Code,SubCode,forbidden,LastModifyDT) 
+    values (${type},:shopid,`
+    let usql = `update ${this.config.DBOrderReview}.dbo.OrderControl set forbidden=:forbidden, LastModifyDT=getdate() 
+    where typeid=${type} and shopid=:shopid `
+    switch(type)
+        {
+          case 1:
+            isql += "'-','-'"
+            usql += " and code='-' and SubCode='-'"
+            break
+          case 2:
+          case 3:
+            isql += ":sxid,'-'"
+            usql += " and code=:sxid and SubCode='-'"
+            break
+          case 4:
+            isql += ":deptid,:skutype"
+            usql += " and code=:deptid and SubCode=:skutype"
+            break
+          default:
+            break
+        }
+    isql += ",:forbidden,getdate())"
+    return ctx.model.transaction(async function (t) {
+      let promises = []
+      for( let obj of payload.rows){
+        const sql = obj.isnew ? isql: usql
+        const type = obj.isnew ? ctx.model.QueryTypes.INSERT : ctx.model.QueryTypes.UPDATE
+         let newPromise = ctx.model.query(sql, { transaction: t, replacements: {
+          shopid: obj.shopid, 
+          deptid: obj.deptid, 
+          sxid: obj.sxid, 
+          skutype: obj.skutype, 
+          forbidden: !obj.allowOrder
+        }, type})
+        promises.push(newPromise)         
+      }
+      const res = await Promise.all(promises)   
+      ctx.logger.debug('res - ' + res)
+      return  res 
+    }).then(function (result) {
+      // Transaction has been committed
+      // result is whatever the result of the promise chain returned to the transaction callback
+        ctx.helper.success({ctx, res: result})  
+    }).catch(function (err) {
+      // Transaction has been rolled back
+      // err is whatever rejected the promise chain returned to the transaction callback
+      throw err
+    })
   }
 
 

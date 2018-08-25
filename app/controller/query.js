@@ -167,7 +167,7 @@ WHERE   a.ShopType in (11,13) and a.Enable =1`
     const { ctx } = this
     const permissions = await  ctx.model.query(`SELECT   CONVERT(bit,(CASE WHEN b.FunctionId IS NULL THEN 1 ELSE 0 END)) AS isnew, a.PartID AS roleid, a.Name AS rolename, ISNULL(b.FunctionId, 0) AS auth
 FROM      ${this.config.DBConnect}.dbo.Part AS a LEFT OUTER JOIN
-                OrgRoleVSFunction AS b ON b.OrgRoleID = a.PartID
+                ${this.config.DBOrderReview}.dbo.OrgRoleVSFunction AS b ON b.OrgRoleID = a.PartID
 ORDER BY roleid`, { type: ctx.model.QueryTypes.SELECT}) 
     const res = permissions
     // 设置响应内容和响应状态码
