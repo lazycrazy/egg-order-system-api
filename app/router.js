@@ -15,7 +15,6 @@ module.exports = app => {
   router.delete('/api/role', app.jwt, controller.role.removes)
   router.resources('role', '/api/role', app.jwt, controller.role)
 
-  router.get('/api/query/shopServerUrl/:shopid', app.jwt, controller.query.shopServerUrl)
   router.get('/api/query/shop', app.jwt, controller.query.shop)
   router.get('/api/query/shopTypes', app.jwt, controller.query.shopTypes)
   router.get('/api/query/curshop', app.jwt, controller.query.curshop)
@@ -34,13 +33,7 @@ module.exports = app => {
   router.delete('/api/set/functionSetting', app.jwt, controller.set.deleteFunctionSetting)
 
   router.get('/api/purchase/reviewAuth', app.jwt, controller.purchase.reviewAuth)
-  router.post('/api/purchase/listByShop', app.jwt, controller.purchase.listByShop)
-  router.post('/api/purchase/itemBySheetIds', app.jwt, controller.purchase.itemBySheetIds)
-  router.post('/api/purchase/itemReason', app.jwt, controller.purchase.itemReason)
-  router.post('/api/purchase/review', app.jwt, controller.purchase.review)
-  router.post('/api/purchase/sheetLog', app.jwt, controller.purchase.sheetLog)
-  router.post('/api/purchase/updateItemAndLog', app.jwt, controller.purchase.updateItemAndLog)
-
+  
 
   // userAccess
   router.post('/api/user/access/login', controller.userAccess.login)
@@ -69,9 +62,18 @@ module.exports = app => {
   router.get('/api/upload', app.jwt, controller.upload.index)
   router.delete('/api/upload', app.jwt, controller.upload.removes)
   // router.resources('upload', '/api/upload', controller.upload)
+  if(app.config.IsSC) {
+    router.post('/api/purchase/listByShop', app.jwt, controller.purchase.listByShop)
+    router.post('/api/purchase/itemBySheetIds', app.jwt, controller.purchase.itemBySheetIds)
+    router.post('/api/purchase/itemReason', app.jwt, controller.purchase.itemReason)
+    router.post('/api/purchase/review', app.jwt, controller.purchase.review)
+    router.post('/api/purchase/sheetLog', app.jwt, controller.purchase.sheetLog)
+    router.post('/api/purchase/updateItemAndLog', app.jwt, controller.purchase.updateItemAndLog)
+  }
 
-  if(app.config.IsHQ){
-    //router.get('/api/query/shopServerInfo', app.jwt, controller.query.shopServerInfo)
+  if(app.config.IsHQ) {
+    router.get('/api/query/shopServerUrl/:shopid', app.jwt, controller.query.shopServerUrl)
+    router.get('/api/query/shopServerInfo', app.jwt, controller.query.shopServerInfo)
     router.post('/api/set/functionSettingImport', app.jwt, controller.set.functionSettingImport)
 
     router.post('/api/set/shopNeed3ReviewCount', controller.set.shopNeed3ReviewCount)

@@ -7,7 +7,7 @@ class QueryService extends Service {
   	const res = await ctx.model.query(`
 SELECT   Value AS shopid,
                     (SELECT   COUNT(1) AS Expr1
-                     FROM      ${this.config.DBStock}.dbo.PurchaseAsk AS pa
+                     FROM      ${this.config.DBStock}.dbo.PurchaseAsk0 AS pa
                      WHERE   EXISTS
                                          (SELECT   1 AS Expr1
                                           FROM      ${this.config.DBOrderReview}.dbo.PurchaseControlItemLogs AS l

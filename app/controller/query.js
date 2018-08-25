@@ -90,7 +90,7 @@ WHERE   (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)`,  { replacement
                                            ${this.config.DBStock}.dbo.SGroup AS k ON k.ID = LEFT(g.DeptID, 2) LEFT OUTER JOIN
                                            ${this.config.DBStock}.dbo.SGroup AS b ON b.ID = LEFT(g.DeptID, 1)
                            WHERE   (gs.Flag IN (0, 8)) AND (gs.ShopID = :shopid))
-    SELECT   type, id, label, pid
+    SELECT   type, id,cast(id as varchar)  +' - '+ label label, pid
     FROM      (SELECT DISTINCT 1 AS type, b_id AS id, b_name AS label, NULL AS pid
                      FROM      goods
                      UNION
