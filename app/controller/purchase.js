@@ -145,6 +145,20 @@ where pm.LoginID=  :userid
   async listByShop() {
     const { ctx } = this
     const payload = ctx.request.body
+    const auth = payload.auth
+    if(auth < 1)
+      throw new Error('没有审批权限') 
+    let cdi = ` and exists (select 1 from ${this.config.DBOrderReview}.[dbo].[PurchaseControlItemLogs] l where 
+             l.SheetID = p.sheetid and l.serialid = -12) ` 
+    if(auth === 1)
+      cdi = ` and not exists (select 1 from ${this.config.DBOrderReview}.[dbo].[PurchaseControlItemLogs] l where 
+             l.SheetID = p.sheetid and l.serialid = -11) `
+    else if(auth === 2)
+      cdi = ` and exists (select 1 from ${this.config.DBOrderReview}.[dbo].[PurchaseControlItemLogs] l where 
+             l.SheetID = p.sheetid and l.serialid = -11)
+              and not exists (select 1 from ${this.config.DBOrderReview}.[dbo].[PurchaseControlItemLogs] l where 
+             l.SheetID = p.sheetid and l.serialid = -12)
+              `
     const fs = await ctx.model.query(`
 SELECT  *
 FROM    (
@@ -152,13 +166,13 @@ SELECT ROW_NUMBER() OVER ( ORDER BY p.EditDate ) AS RowNum,p.SheetID, p.ShopID, 
                 p.Notes, p.PrintCount, s.Name AS ShopName
 FROM      ${this.config.DBStock}.dbo.PurchaseAsk0 AS p LEFT OUTER JOIN
                 ${this.config.DBStock}.dbo.Shop AS s ON p.ShopID = s.ID
-WHERE   (p.ShopId = :shopid)) as resultRows
+WHERE   (p.ShopId = :shopid) ${cdi} ) as resultRows
 WHERE   RowNum between :index and :count
 ORDER BY RowNum
 `,  { replacements: { shopid: payload.shopid, index: (payload.curpage - 1) * payload.pagesize + 1, count: (payload.curpage) * payload.pagesize}, type: ctx.model.QueryTypes.SELECT })
     const rs = await ctx.model.query(`
     	SELECT count(1) as value FROM ${this.config.DBStock}.dbo.PurchaseAsk0 AS p
-where p.ShopID=:shopid`,  { replacements: { shopid: payload.shopid }, type: ctx.model.QueryTypes.SELECT })
+where p.ShopID=:shopid ${cdi} `,  { replacements: { shopid: payload.shopid }, type: ctx.model.QueryTypes.SELECT })
     const res = { fs, total: rs[0].value }
     ctx.logger.debug('res'+JSON.stringify(res))
     // 设置响应内容和响应状态码
@@ -169,11 +183,11 @@ async itemReason() {
     const { ctx } = this
     const payload = ctx.request.body
     const reasons = await ctx.model.query(`SELECT   SheetID, GoodsID, reason
-FROM      (SELECT   SheetID, GoodsID, dbo.F_CheckPurchaseItem(SheetID, GoodsID, :userid) AS reason
+FROM      (SELECT   SheetID, GoodsID, dbo.F_CheckPurchaseItem(SheetID, GoodsID, :auth) AS reason
                  FROM      ${this.config.DBStock}.dbo.PurchaseAskItem0
                  WHERE   (SheetID IN (:sheetids))) AS results
 WHERE   (LEN(reason) > 0)
-`,  { replacements: { sheetids: payload.sheetids, userid: ctx.state.user.data._id }, type: ctx.model.QueryTypes.SELECT })
+`,  { replacements: { sheetids: payload.sheetids, auth: payload.auth }, type: ctx.model.QueryTypes.SELECT })
      
     const res = reasons
     // 设置响应内容和响应状态码
@@ -185,10 +199,10 @@ WHERE   (LEN(reason) > 0)
   async itemBySheetIds() {
     const { ctx } = this
     const payload = ctx.request.body
-    const itemsp = ctx.model.query(`SELECT i.*,g.Name goodsname, ${this.config.DBOrderReview}.dbo.F_CheckPurchaseItem(SheetID,i.GoodsID,:userid) reason
+    const itemsp = ctx.model.query(`SELECT i.*,g.Name goodsname, ${this.config.DBOrderReview}.dbo.F_CheckPurchaseItem(SheetID,i.GoodsID,:auth) reason
 FROM      ${this.config.DBStock}.dbo.PurchaseAskItem0 i left join ${this.config.DBStock}..Goods g on g.GoodsID = i.GoodsID
 WHERE   (SheetID IN (:sheetids)) order by serialid
-`,  { replacements: { sheetids: payload.sheetids, userid: ctx.state.user.data._id }, type: ctx.model.QueryTypes.SELECT })
+`,  { replacements: { sheetids: payload.sheetids, auth: payload.auth }, type: ctx.model.QueryTypes.SELECT })
     const logsp = ctx.model.query(`SELECT  l.*,u.Name LogUser FROM      ${this.config.DBOrderReview}.dbo.[PurchaseControlItemLogs] l left JOIN
         ${this.config.DBConnect}.dbo.Login  u on l.LogUserID = u.LoginID
 WHERE   (SheetID IN (:sheetids)) order by LogTime

@@ -18,6 +18,34 @@ ORDER BY ssi.Need3ReviewCount DESC
     ctx.helper.success({ctx, res})
   }
 
+  async master() {
+    const { ctx } = this
+    const {entity, shopid} = ctx.request.body || {}
+    let fields = ''
+    if(entity == 'FunctionSetting')
+      fields = `[FunctionId]
+      ,[ShopId]
+      ,[GoodsId]
+      ,[DeptId]
+      ,[ordermultiple]
+      ,[OrderNum]
+      ,[OrderAmt]
+      ,[DayUpperlimit]
+      ,[DayUpperlimitAmt]`
+    else if(entity == 'OrderControl')
+      fields = `[TypeID]
+      ,[ShopID]
+      ,[Code]
+      ,[SubCode]
+      ,[forbidden]`
+
+
+    let sql = `select ${fields} from ${this.config.DBOrderReview}.dbo.${entity} where shopid=:shopid`
+    const res = await ctx.model.query(sql,  { replacements: { shopid }, type: ctx.model.QueryTypes.SELECT })
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx, res})
+  }
+
   async goodsIdsBySF() {
     const { ctx } = this
     const payload = ctx.request.body

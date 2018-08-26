@@ -22,6 +22,78 @@ WHERE   (Name = '本店号')
     }
     return res[0]
   }
+
+  async curShopId() {
+    const { ctx } = this
+    
+    const sql = `select value from ${this.config.DBStock}.dbo.config c where c.Name='本店号' `
+    const res = await ctx.model.query(sql, { type: ctx.model.QueryTypes.SELECT })
+    if (res.length === 0) {
+      throw new Error('本店号不存在')
+    }
+    return res[0].value
+  }
+
+  async syncUser() {
+    const { ctx } = this
+    await ctx.model.query(`  insert into ${this.config.DBOrderReview}..Login ([LoginID]
+      ,[Name]
+      ,[CName]
+      ,[password]
+      ,[EnableFlag]
+      ,[Note]
+      ,[LastModifyDT]
+      ,[IsAdmin])
+      select  [LoginID],[Name],[CName],[Name],1,note,getdate(),0  from ${this.config.DBConnect}..Login a where EnableFlag =1
+      and
+      not exists (select 1 from ${this.config.DBOrderReview}..Login b where a.LoginID =b.LoginID)
+      `,  { replacements: { }, type: ctx.model.QueryTypes.INSERT })
+  }
+
+
+async syncFunctionSetting(data) {
+    const { ctx } = this
+    const dsql = `delete from ${this.config.DBOrderReview}.dbo.FunctionSetting `
+    return ctx.model.transaction(async function (t) {
+      //delete 
+      await ctx.model.query(dsql, { transaction: t, type: ctx.model.QueryTypes.DELETE })
+             
+        //insert
+      await ctx.model.FunctionSetting.bulkCreate(data, { transaction: t })    
+     
+    }).then(function () {
+      // Transaction has been committed
+      // result is whatever the result of the promise chain returned to the transaction callback
+       
+    }).catch(function (err) {
+      // Transaction has been rolled back
+      // err is whatever rejected the promise chain returned to the transaction callback
+      throw err
+    });
+  }
+
+  async syncOrderControl(data) {
+    const { ctx } = this
+    const dsql = `delete from ${this.config.DBOrderReview}.dbo.OrderControl `
+    return ctx.model.transaction(async function (t) {
+      //delete 
+      await ctx.model.query(dsql, { transaction: t, type: ctx.model.QueryTypes.DELETE })
+             
+        //insert
+      await ctx.model.OrderControl.bulkCreate(data, { transaction: t })    
+     
+    }).then(function () {
+      // Transaction has been committed
+      // result is whatever the result of the promise chain returned to the transaction callback
+       
+    }).catch(function (err) {
+      // Transaction has been rolled back
+      // err is whatever rejected the promise chain returned to the transaction callback
+      throw err
+    });
+  }
+
+
 }
 
 

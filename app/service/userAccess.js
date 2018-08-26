@@ -13,7 +13,7 @@ class UserAccessService extends Service {
     if(!user){
       ctx.throw(404, 'user not found')
     }
-    let verifyPsw = await ctx.compare(payload.password, await ctx.genHash(user.password))
+    let verifyPsw = await ctx.compare(payload.password.trim(), await ctx.genHash(user.password.trim()))
     if(!verifyPsw) {
       ctx.throw(404, 'user password is error')
     }

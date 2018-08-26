@@ -75,8 +75,9 @@ module.exports = app => {
     router.get('/api/query/shopServerUrl/:shopid', app.jwt, controller.query.shopServerUrl)
     router.get('/api/query/shopServerInfo', app.jwt, controller.query.shopServerInfo)
     router.post('/api/set/functionSettingImport', app.jwt, controller.set.functionSettingImport)
-
     router.post('/api/set/shopNeed3ReviewCount', controller.set.shopNeed3ReviewCount)
+
+    router.post('/api/query/master',  controller.query.master)
   }
 
   router.get('*', controller.home.index)

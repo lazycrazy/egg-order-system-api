@@ -100,3 +100,18 @@ select * from mySHOPSHStock..GoodsPKNum --配送商品
  909 593 896  jq3p43
 路由记住数据
 总部和店铺的库名区分
+
+
+
+
+  insert into ${DBOrderReview}..Login ([LoginID]
+      ,[Name]
+      ,[CName]
+      ,[password]
+      ,[EnableFlag]
+      ,[Note]
+      ,[LastModifyDT]
+      ,[IsAdmin])
+  select  [LoginID],[Name],[CName],[Name],1,note,getdate(),0  from ${DBConnect}..Login a where EnableFlag =1
+  and
+  not exists (select 1 from ${DBOrderReview}..Login b where a.LoginID =b.LoginID)
