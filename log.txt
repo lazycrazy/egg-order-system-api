@@ -1,6 +1,5 @@
-drop function F_CheckPurchaseItem;
-
-USE order_review 
+ 
+USE scOrderReview
 GO
 --单号,商品id,操作人
 CREATE  FUNCTION F_CheckPurchaseItem(@sheetid char(16),@goodsid int,@auth int)
@@ -10,70 +9,85 @@ BEGIN
 DECLARE @rs nvarchar(256)
 ,
 @shopid char(4),
-@qty decimal(12,3)
+@oqty decimal(12,3),
+@oename varchar,
+@oeshortname varchar,
+@odeptid int,
+@ocost decimal(12,4),
+@skutype char(1)='A' --怎么取这个值？
 SET @rs = ''
 SET @shopid = (select ShopID from mySHOPSHStock..PurchaseAsk0 where SheetID=@sheetid)
-SET @qty = (select Qty from mySHOPSHStock..[PurchaseAskItem0] where SheetID=@sheetid and @goodsid = [GoodsID])
-if(isnull(@qty,0) <=0) 
+select @oqty =pai.Qty,@oename =rtrim(g.ename),@oeshortname = rtrim(g.EShortName),@odeptid=g.DeptID,
+@ocost=pai.Cost
+ from mySHOPSHStock..[PurchaseAskItem0] pai join mySHOPSHStock..Goods g on pai.GoodsID = g.GoodsID where pai.SheetID=@sheetid and @goodsid = pai.GoodsID
+if(isnull(@oqty,0) <=0) 
   return @rs
 
 --订货属性值判断
  --1 店铺
- if ((select count(1) from [dbo].[OrderControl] where [TypeID]=1 and code=@shopid and [forbidden]=1)>0)   
+ if ((select count(1) from [dbo].[OrderControl] where [TypeID]=1 and shopid=@shopid and [forbidden]=1)>0)   
   set @rs = @rs + '此店不允许订货'
 return @rs
 
---2 销售属性
- if ((select count(1) from [dbo].[OrderControl] where [TypeID]=2 and code=@shopid and [forbidden]=1)>0)   
-  set @rs = @rs + '此店不允许订货'
+--2 毛利属性
+ if ((select count(1) from [dbo].[OrderControl] where [TypeID]=2 and shopid=@shopid and code = @oename and [forbidden]=1)>0)   
+  set @rs = @rs + '毛利属性 '+@oename+' 不允许订货'
   return @rs
-  --3 毛利属性
- if ((select count(1) from [dbo].[OrderControl] where [TypeID]=3 and code=@shopid and [forbidden]=1)>0)   
-  set @rs = @rs + '此店不允许订货'
+  --3 销售属性
+ if ((select count(1) from [dbo].[OrderControl] where [TypeID]=3 and shopid=@shopid and code =@oeshortname and [forbidden]=1)>0)   
+  set @rs = @rs + '销售属性 '+@oeshortname+' 不允许订货'
   return @rs
   --4 品类店型组
- if ((select count(1) from [dbo].[OrderControl] where [TypeID]=4 and code=@shopid and [forbidden]=1)>0)   
-  set @rs = @rs + '此店不允许订货'
+ if ((select count(1) from [dbo].[OrderControl] where [TypeID]=4 and shopid=@shopid and code = @odeptid and subcode = @skutype and [forbidden]=1)>0)   
+  set @rs = @rs +'品类店型组 '+@odeptid+'-'+@skutype+' 不允许订货'
   return @rs
 
-  if(1=1)
-  set @rs = @rs + '有错2'
-    return @rs
 
 
   --用户审批权限属性值 判断
- declare 
+declare 
 @multiple numeric(10,2),--倍数
 @num numeric(10,2),--数量
 @amt money,--金额
 @limitnum numeric(10,2),--每日数量上线
-@limitamt money--每日金额上限
+@limitamt money,--每日金额上限
+@totalnum numeric(10,2),
+@totalamt money
 
 select 
-@multiple=isnull(fs.ordermultiple,0) ,
+@multiple=isnull(fs.ordermultiple,0) ,--倍数*？
 @num=isnull(fs.[OrderNum],0),
 @amt=isnull(fs.[OrderAmt],0),  
 @limitnum=isnull(fs.[DayUpperlimit] ,0), 
 @limitamt=isnull(fs.[DayUpperlimitAmt],0) 
- from [dbo].[FunctionSetting] fs join [dbo].[OrgRoleVSFunction] rf on 
-fs.FunctionId = rf.FunctionId and fs.ShopId = @shopid 
-join mySHOPSHConnect..PartMember pm on 
-rf.OrgRoleID = pm.PartID and pm.LoginID = @userid
+ from [dbo].[FunctionSetting] fs where 
+fs.FunctionId =@auth  and fs.ShopId = @shopid 
 
+
+(select @totalnum=sum(Qty),@totalamt=sum(Qty*Cost) from  mySHOPSHStock..PurchaseAskItem where GoodsID = @goodsid )
 
 --倍数 与 数量比较
-if(@qty > @num)
-  set @rs = @rs + '数量不能大于' + convert(varchar,@num)
+if(@oqty > @num)
+  set @rs = @rs + '数量不能大于 xx 的多少倍' + convert(varchar,@multiple)
 return @rs
 
 --数量 与 数量比较
-if(@qty > @num)
+if(@oqty > @num)
   set @rs = @rs + '数量不能大于' + convert(varchar,@num)
 return @rs
 
 --金额比较
-if(@qty > @num)
-  set @rs = @rs + '数量不能大于' + convert(varchar,@num)
+if(@ocost > @amt)
+  set @rs = @rs + '金额不能大于' + convert(varchar,@amt)
+return @rs
+
+--单日最大数量比较
+if(@oqty+@totalnum> @limitnum  )
+  set @rs = @rs + '每日订货数不能大于' + convert(varchar,@limitnum)
+return @rs
+--单日最大金额比较
+if((@oqty*@ocost)+@totalamt > @limitamt  )
+  set @rs = @rs + '每日订货金额不能大于' + convert(varchar,@limitamt)
 return @rs
 
 RETURN   @rs   
@@ -81,6 +95,8 @@ END
 GO 
 
 SELECT   dbo.F_CheckPurchaseItem('1111111111111111',1,1)  as a
+ 
+
  
 
 

@@ -11,12 +11,12 @@ SELECT   Value AS shopid,
                      WHERE   EXISTS
                                          (SELECT   1 AS Expr1
                                           FROM      ${this.config.DBOrderReview}.dbo.PurchaseControlItemLogs AS l
-                                          WHERE   (pa.SheetID = SheetID) AND (l.serialid = 12))) AS count
+                                          WHERE   (pa.SheetID = SheetID) AND (l.serialid = -12))) AS count
 FROM      ${this.config.DBStock}.dbo.Config AS c
 WHERE   (Name = '本店号') 
 `,  { replacements: { }, type: ctx.model.QueryTypes.SELECT })
 
-    this.logger.debug('cur shop info'+ JSON.stringify(res))
+    this.logger.info('cur shop info'+ JSON.stringify(res))
     if (res.length === 0) {
       this.ctx.throw(404, 'ShopInfo not found')
     }
@@ -53,13 +53,14 @@ WHERE   (Name = '本店号')
 
 async syncFunctionSetting(data) {
     const { ctx } = this
+    this.logger.info('syncFunctionSetting: data count '+ data.length)
     const dsql = `delete from ${this.config.DBOrderReview}.dbo.FunctionSetting `
     return ctx.model.transaction(async function (t) {
       //delete 
       await ctx.model.query(dsql, { transaction: t, type: ctx.model.QueryTypes.DELETE })
              
         //insert
-      await ctx.model.FunctionSetting.bulkCreate(data, { transaction: t })    
+      await ctx.model.FunctionSetting.bulkCreate(data, { transaction: t, logging: false })    
      
     }).then(function () {
       // Transaction has been committed
@@ -74,13 +75,14 @@ async syncFunctionSetting(data) {
 
   async syncOrderControl(data) {
     const { ctx } = this
+    this.logger.info('syncOrderControl: data count '+ data.length)
     const dsql = `delete from ${this.config.DBOrderReview}.dbo.OrderControl `
     return ctx.model.transaction(async function (t) {
       //delete 
       await ctx.model.query(dsql, { transaction: t, type: ctx.model.QueryTypes.DELETE })
              
         //insert
-      await ctx.model.OrderControl.bulkCreate(data, { transaction: t })    
+      await ctx.model.OrderControl.bulkCreate(data, { transaction: t , logging: false })    
      
     }).then(function () {
       // Transaction has been committed
