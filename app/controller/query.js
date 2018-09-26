@@ -65,11 +65,14 @@ SELECT  *
 FROM    (
 SELECT ROW_NUMBER() OVER ( ORDER BY fs.GoodsId ) AS RowNum,fs.FunctionId, fs.ShopId, fs.GoodsId, fs.DeptId, fs.ordermultiple, fs.OrderNum, fs.OrderAmt, fs.DayUpperlimit, 
                 fs.DayUpperlimitAmt, fs.LastModifyDT, g.BarcodeID AS barcodeid, g.Name AS goodsname, s.Name AS shopname, 
-                d.Name AS deptname
+                d.Name AS deptname,e.id kid,e.name kname,g.customno,isnull(mo.MinOrderQty,0) minorderqty,isnull(c.cost,0) cost
 FROM      ${this.config.DBOrderReview}.dbo.FunctionSetting AS fs INNER JOIN
                 ${this.config.DBStock}.dbo.Goods AS g ON fs.GoodsId = g.GoodsID INNER JOIN
                 ${this.config.DBStock}.dbo.Shop AS s ON fs.ShopId = s.ID LEFT OUTER JOIN
-                ${this.config.DBStock}.dbo.Dept AS d ON fs.DeptId = d.ID
+                ${this.config.DBStock}.dbo.Dept AS d ON fs.DeptId = d.ID LEFT OUTER JOIN
+                ${this.config.DBStock}.dbo.SGroup AS e ON LEFT(fs.DeptId, 2) = e.ID LEFT OUTER JOIN
+                ${this.config.DBStock}.dbo.MinOrder as mo on s.id= mo.shopid and g.GoodsID = mo.goodsid LEFT OUTER JOIN
+                ${this.config.DBStock}.dbo.Cost as c on s.id = c.shopid and g.goodsid = c.goodsid and c.flag=0
 WHERE   (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)) as resultRows
 WHERE   RowNum between :index and :count
 ORDER BY RowNum
@@ -236,14 +239,15 @@ WHERE   (a.ShopType in (11,13) and a.Enable =1) and a.ID in (:sps)`, { replaceme
                     ${this.config.DBOrderReview}.dbo.OrderControl AS o ON o.TypeID = 3 AND s.ID = o.ShopID AND o.Code = m.EShortName
     WHERE   (s.ShopType IN (11, 13)) AND (s.Enable = 1) and s.ID in (:sps)
     ORDER BY shopid, sxid`, { replacements:{ sps }, type: ctx.model.QueryTypes.SELECT}) 
-    let pldxzs = []
-    if(sps.length === 1)
-      pldxzs = await  ctx.model.query(`SELECT   CONVERT(bit, (CASE WHEN d .forbidden IS NULL THEN 1 ELSE 0 END)) AS isnew, 4 AS type, a.Shopid AS shopid, 
+    const pldxzs = await ctx.model.query(`
+        WITH abc AS (SELECT DISTINCT Shopid, LEFT(Deptid, 2) AS deptid, SkuType
+                       FROM      mySHOPHQStock.dbo.hy_deptsku)
+        SELECT   CONVERT(bit, (CASE WHEN d.forbidden IS NULL THEN 1 ELSE 0 END)) AS isnew, 4 AS type, a.Shopid AS shopid, 
                   b.Name AS shopname, c.ID AS deptid, c.Name AS deptname, a.SkuType AS skutype, CONVERT(bit, ISNULL(d.forbidden, 
                   0)) AS forbidden
-  FROM      ${this.config.DBStock}.dbo.hy_deptsku AS a INNER JOIN
+        FROM      abc AS a INNER JOIN
                   ${this.config.DBStock}.dbo.Shop AS b ON a.Shopid = b.ID INNER JOIN
-                  ${this.config.DBStock}.dbo.Dept AS c ON a.Deptid = c.ID LEFT OUTER JOIN
+                  ${this.config.DBStock}.dbo.SGroup AS c ON a.Deptid = c.ID LEFT OUTER JOIN
                   ${this.config.DBOrderReview}.dbo.OrderControl AS d ON d.TypeID = 4 AND d.ShopID = a.Shopid AND d.Code = a.Deptid AND 
                   d.SubCode = a.SkuType
   WHERE   (b.ShopType IN (11, 13)) AND (b.Enable = 1) and b.ID in (:sps)

@@ -63,6 +63,9 @@ module.exports = app => {
   router.delete('/api/upload', app.jwt, controller.upload.removes)
   // router.resources('upload', '/api/upload', controller.upload)
   if(app.config.IsSC) {
+    router.post('/api/purchaseQuery/originqty', app.jwt, controller.purchaseQuery.originqty)
+    router.post('/api/purchaseQuery/listByShop', app.jwt, controller.purchaseQuery.listByShop)
+    router.post('/api/purchaseQuery/itemBySheetIds', app.jwt, controller.purchaseQuery.itemBySheetIds)
     router.post('/api/purchase/listByShop', app.jwt, controller.purchase.listByShop)
     router.post('/api/purchase/itemBySheetIds', app.jwt, controller.purchase.itemBySheetIds)
     router.post('/api/purchase/itemReason', app.jwt, controller.purchase.itemReason)

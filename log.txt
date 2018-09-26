@@ -111,6 +111,8 @@ SELECT   dbo.F_CheckPurchaseItem('1111111111111111',1,1)  as a
 select * from mySHOPSHStock..MinOrder --普通商品
 select * from mySHOPSHStock..GoodsPKNum --配送商品
 
+总部有没有最小订货表，商品进价怎么取  2个报表
+
 
 总部库名和店铺库名不一致，需要区分开
  909 593 896  jq3p43
