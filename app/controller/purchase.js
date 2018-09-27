@@ -215,13 +215,13 @@ WHERE   (SheetID IN (:sheetids)) order by LogTime
  
   async review() {
     const { ctx } = this
-    const { sheetid, auth } = ctx.request.body
-    // const userid = ctx.state.user.data._id
+    const { sheetid } = ctx.request.body
+    const userid = ctx.state.user.data._id
     const fs = await ctx.model.query(`DECLARE @return_value int
 EXEC  @return_value = [${this.config.DBStock}].[dbo].[ST_PurchaseAsk]
     @SheetID = :sheetid,
-    @Auth = :auth
-SELECT  'result' = @return_value`,  { replacements: { sheetid, auth } })
+    @Checker = :userid
+SELECT  'result' = @return_value`,  { replacements: { sheetid, userid } })
     const res = fs
     ctx.logger.debug(res)
     // 设置响应内容和响应状态码
