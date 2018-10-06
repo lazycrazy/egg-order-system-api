@@ -23,6 +23,9 @@ module.exports = app => {
   router.get('/api/query/shopGoods/:shopid', app.jwt, controller.query.shopGoods)
   router.post('/api/query/orderProperty', app.jwt, controller.query.orderProperty)
   router.get('/api/query/rolePermission', app.jwt, controller.query.rolePermission)
+  router.get('/api/query/userInfo', app.jwt, controller.query.userInfo)
+  
+  router.get('/api/sync/user', controller.query.syncUser)
 
 
   // query
@@ -72,6 +75,9 @@ module.exports = app => {
     router.post('/api/purchase/review', app.jwt, controller.purchase.review)
     router.post('/api/purchase/sheetLog', app.jwt, controller.purchase.sheetLog)
     router.post('/api/purchase/updateItemAndLog', app.jwt, controller.purchase.updateItemAndLog)
+
+    router.get('/api/sync/fs', controller.query.syncFunctionSetting)
+    router.get('/api/sync/oc', controller.query.syncOrderControl)
   }
 
   if(app.config.IsHQ) {

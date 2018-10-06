@@ -25,7 +25,7 @@ class PurchaseQueryController extends Controller {
     const fs = await ctx.model.query(`
 WITH originrow AS (SELECT   SheetID, GoodsID, MIN(LogTime) AS logtime
                                 FROM     ${this.config.DBOrderReview}.dbo.PurchaseControlItemLogs AS pcil
-                                WHERE   (GoodsID IS NOT NULL) AND (LogTime >= :dates) AND (LogTime <= :datee) 
+                                WHERE   (GoodsID IS NOT NULL) AND (LogTime >= :dates) AND (LogTime <= DATEADD(day,1,:datee)) 
                ${cdi1} 
                                 GROUP BY SheetID, GoodsID), originqty AS
     (SELECT   pcil.SheetID, pcil.GoodsID, SUM(pcil.Qty) AS oqty
@@ -33,14 +33,14 @@ WITH originrow AS (SELECT   SheetID, GoodsID, MIN(LogTime) AS logtime
                      originrow ON pcil.SheetID = originrow.SheetID AND pcil.GoodsID = originrow.GoodsID AND 
                      pcil.LogTime = originrow.logtime
      GROUP BY pcil.SheetID, pcil.GoodsID), rs AS
-    (SELECT   pa.ShopID AS shopid, CONVERT(VARCHAR(10), pa.EditDate, 111) AS editdate, pai.GoodsID AS goodsid, 
+    (SELECT   pa.ShopID AS shopid, CONVERT(VARCHAR(10), pa.CheckDate, 111) AS editdate, pai.GoodsID AS goodsid, 
                      SUM(ISNULL(originqty.oqty, pai.Qty)) AS oqty, SUM(pai.Qty) AS qty
      FROM      ${this.config.DBStock}.dbo.PurchaseAsk AS pa INNER JOIN
                      ${this.config.DBStock}.dbo.PurchaseAskItem AS pai ON pa.SheetID = pai.SheetID LEFT OUTER JOIN
                      originqty ON pai.SheetID = originqty.SheetID AND pai.GoodsID = originqty.GoodsID
-           where (pa.EditDate >= :dates) AND (pa.EditDate <= :datee)
+           where (pa.CheckDate >= :dates) AND (pa.CheckDate <= DATEADD(day,1,:datee))
            ${cdi2} 
-     GROUP BY pa.ShopID, CONVERT(VARCHAR(10), pa.EditDate, 111), pa.EditDate, pai.GoodsID),rsp as
+     GROUP BY pa.ShopID, CONVERT(VARCHAR(10), pa.CheckDate, 111), pai.GoodsID),rsp as
    (SELECT  ROW_NUMBER() OVER ( ORDER BY rs.shopid, rs.editdate, rs.goodsid ) AS RowNum, rs.shopid, rs.editdate, rs.goodsid, rs.oqty, rs.qty, g.CustomNo AS customno, g.Name AS goodsname, 
                     g.BarcodeID AS barcodeid, mo.MinOrderQty AS minorderqty, s.Name AS shopname,d.ID deptid,d.Name deptname,sg.ID kid,sg.Name kname
     FROM      rs LEFT OUTER JOIN
@@ -55,7 +55,7 @@ ORDER BY RowNum
     const rs = await ctx.model.query(`
 WITH originrow AS (SELECT   SheetID, GoodsID, MIN(LogTime) AS logtime
                                 FROM     ${this.config.DBOrderReview}.dbo.PurchaseControlItemLogs AS pcil
-                                WHERE   (GoodsID IS NOT NULL) AND (LogTime >= :dates) AND (LogTime <= :datee) 
+                                WHERE   (GoodsID IS NOT NULL) AND (LogTime >= :dates) AND (LogTime <= DATEADD(day,1,:datee)) 
                ${cdi1} 
                                 GROUP BY SheetID, GoodsID), originqty AS
     (SELECT   pcil.SheetID, pcil.GoodsID, SUM(pcil.Qty) AS oqty
@@ -63,14 +63,14 @@ WITH originrow AS (SELECT   SheetID, GoodsID, MIN(LogTime) AS logtime
                      originrow ON pcil.SheetID = originrow.SheetID AND pcil.GoodsID = originrow.GoodsID AND 
                      pcil.LogTime = originrow.logtime
      GROUP BY pcil.SheetID, pcil.GoodsID), rs AS
-    (SELECT   pa.ShopID AS shopid, CONVERT(VARCHAR(10), pa.EditDate, 111) AS editdate, pai.GoodsID AS goodsid, 
+    (SELECT   pa.ShopID AS shopid, CONVERT(VARCHAR(10), pa.CheckDate, 111) AS editdate, pai.GoodsID AS goodsid, 
                      SUM(ISNULL(originqty.oqty, pai.Qty)) AS oqty, SUM(pai.Qty) AS qty
      FROM      ${this.config.DBStock}.dbo.PurchaseAsk AS pa INNER JOIN
                      ${this.config.DBStock}.dbo.PurchaseAskItem AS pai ON pa.SheetID = pai.SheetID LEFT OUTER JOIN
                      originqty ON pai.SheetID = originqty.SheetID AND pai.GoodsID = originqty.GoodsID
-           where (pa.EditDate >= :dates) AND (pa.EditDate <= :datee)
+           where (pa.CheckDate >= :dates) AND (pa.CheckDate <= DATEADD(day,1,:datee))
            ${cdi2} 
-     GROUP BY pa.ShopID, CONVERT(VARCHAR(10), pa.EditDate, 111), pa.EditDate, pai.GoodsID)
+     GROUP BY pa.ShopID, CONVERT(VARCHAR(10), pa.CheckDate, 111), pai.GoodsID)
     SELECT count(1) as value 
     FROM   rs `,  { replacements: { shopid: payload.shopid, sheetid: payload.sheetid, barcodeid: payload.barcodeid, dates: payload.dates, datee: payload.datee }, type: ctx.model.QueryTypes.SELECT })
     const res = { fs, total: rs[0].value }
@@ -102,10 +102,10 @@ WITH originrow AS (SELECT   SheetID, GoodsID, MIN(LogTime) AS logtime
     }
     
     if(payload.editDateS) {
-        cdi += ` and p.editDate >= :editDateS ` 
+        cdi += ` and p.CheckDate >= :editDateS ` 
     }
     if(payload.editDateE) {
-        cdi += ` and p.editDate <= :editDateE ` 
+        cdi += ` and p.CheckDate <= DATEADD(day,1,:editDateE) ` 
     }
     if(payload.sheetid && payload.sheetid.length > 0) {
         cdi += ` and p.sheetid=:sheetid ` 
@@ -116,7 +116,7 @@ WITH originrow AS (SELECT   SheetID, GoodsID, MIN(LogTime) AS logtime
     const fs = await ctx.model.query(`
 SELECT  *
 FROM    (
-SELECT ROW_NUMBER() OVER ( ORDER BY p.EditDate ) AS RowNum,p.SheetID, p.ShopID, p.ManageDeptID, p.AskType, p.Flag, p.Editor, p.EditDate, p.Operator, p.Checker, p.CheckDate, 
+SELECT ROW_NUMBER() OVER ( ORDER BY p.CheckDate ) AS RowNum,p.SheetID, p.ShopID, p.ManageDeptID, p.AskType, p.Flag, p.Editor, p.EditDate, p.Operator, p.Checker, p.CheckDate, 
                 p.Notes, p.PrintCount, s.Name AS ShopName
 FROM      ${this.config.DBStock}.dbo.PurchaseAsk0 AS p LEFT OUTER JOIN
                 ${this.config.DBStock}.dbo.Shop AS s ON p.ShopID = s.ID
@@ -135,7 +135,7 @@ WHERE   (p.ShopId = :shopid) ${cdi}
     const fs1 = await ctx.model.query(`
 SELECT  *
 FROM    (
-SELECT ROW_NUMBER() OVER ( ORDER BY p.EditDate ) AS RowNum,p.SheetID, p.ShopID, p.ManageDeptID, p.AskType, p.Flag, p.Editor, p.EditDate, p.Operator, p.Checker, p.CheckDate, 
+SELECT ROW_NUMBER() OVER ( ORDER BY p.CheckDate ) AS RowNum,p.SheetID, p.ShopID, p.ManageDeptID, p.AskType, p.Flag, p.Editor, p.EditDate, p.Operator, p.Checker, p.CheckDate, 
                 p.Notes, p.PrintCount, s.Name AS ShopName
 FROM      ${this.config.DBStock}.dbo.PurchaseAsk AS p LEFT OUTER JOIN
                 ${this.config.DBStock}.dbo.Shop AS s ON p.ShopID = s.ID

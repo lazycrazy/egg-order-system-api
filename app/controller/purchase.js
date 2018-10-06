@@ -163,9 +163,10 @@ where pm.LoginID=  :userid
 SELECT  *
 FROM    (
 SELECT ROW_NUMBER() OVER ( ORDER BY p.EditDate ) AS RowNum,p.SheetID, p.ShopID, p.ManageDeptID, p.AskType, p.Flag, p.Editor, p.EditDate, p.Operator, p.Checker, p.CheckDate, 
-                p.Notes, p.PrintCount, s.Name AS ShopName
+                p.Notes, p.PrintCount, s.Name AS ShopName,sg.id kid,sg.name kname
 FROM      ${this.config.DBStock}.dbo.PurchaseAsk0 AS p LEFT OUTER JOIN
-                ${this.config.DBStock}.dbo.Shop AS s ON p.ShopID = s.ID
+                ${this.config.DBStock}.dbo.Shop AS s ON p.ShopID = s.ID LEFT OUTER JOIN
+                ${this.config.DBStock}.dbo.SGroup AS sg on p.ManageDeptID = sg.id
 WHERE   (p.ShopId = :shopid) ${cdi} ) as resultRows
 WHERE   RowNum between :index and :count
 ORDER BY RowNum

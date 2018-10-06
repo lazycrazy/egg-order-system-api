@@ -5,6 +5,45 @@ class QueryController extends Controller {
     super(ctx)
   }
 
+// (async () => {
+//   const rawResponse = await fetch('http://localhost:7002/api/sync/oc');
+//   const content = await rawResponse.json();
+
+//   console.log(content);
+// })();
+  async syncFunctionSetting() { 
+    const { ctx } = this
+    await this.app.runSchedule('syncFunctionSetting');
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx})
+  }
+  async syncOrderControl() { 
+    const { ctx } = this
+    await this.app.runSchedule('syncOrderControl');
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx})
+  }
+  async syncUser() {
+    const { ctx } = this
+    await this.app.runSchedule('syncUser');
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx})
+  }
+
+  async userInfo() {
+    const { ctx } = this
+    const uid = ctx.state.user.data._id
+    let sql = `
+SELECT   RTRIM(l.Name) + ' - ' + RTRIM(l.CName) AS uname, p.Name AS rolename
+FROM      ${this.config.DBOrderReview}.dbo.Login AS l LEFT OUTER JOIN
+                ${this.config.DBConnect}.dbo.PartMember AS pm ON l.LoginID = pm.LoginID LEFT OUTER JOIN
+                ${this.config.DBConnect}.dbo.Part AS p ON p.PartID = pm.PartID
+    where l.loginid=:uid`
+    const res = await ctx.model.query(sql,  { replacements: { uid }, type: ctx.model.QueryTypes.SELECT })
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx, res})
+  }
+  
   async shopServerInfo() {
     const { ctx } = this
     const payload = ctx.request.body || {}
