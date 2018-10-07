@@ -120,7 +120,16 @@ FROM      ${this.config.DBOrderReview}.dbo.FunctionSetting AS fs INNER JOIN
     await ctx.model.query(dsql, { transaction: t, type: ctx.model.QueryTypes.DELETE })
            
       //insert
-    await ctx.model.FunctionSettingImport.bulkCreate(obj.data,{ transaction: t })
+    let promises = []
+        for( let i of obj.data){
+          const nsql = ` INSERT INTO [FunctionSettingImport] ([Col1],[Col2],[Col3],[Col4],[Col5],[Col6],[Col7],[Col8])
+values (:Col1,:Col2,:Col3,:Col4,:Col5,:Col6,:Col7,:Col8)      `
+          const type = ctx.model.QueryTypes.INSERT 
+          let newPromise = ctx.model.query(nsql, { transaction: t, replacements: i, type})
+          promises.push(newPromise)         
+      }
+    await Promise.all(promises)
+    //await ctx.model.FunctionSettingImport.bulkCreate(obj.data,{ transaction: t })
      
     var ures = await ctx.model.query(usql, { transaction: t, type: ctx.model.QueryTypes.UPDATE })
     var iires = await ctx.model.query(isql, { transaction: t, type: ctx.model.QueryTypes.INSERT })

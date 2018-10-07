@@ -1,8 +1,13 @@
- 
-USE scOrderReview
+USE [scOrderReview]
 GO
+/****** 对象:  UserDefinedFunction [dbo].[F_CheckPurchaseItem]    脚本日期: 10/07/2018 11:19:09 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+  
 --单号,商品id,操作人
-CREATE  FUNCTION F_CheckPurchaseItem(@sheetid char(16),@goodsid int,@auth int)
+ALTER  FUNCTION [dbo].[F_CheckPurchaseItem](@sheetid char(16),@goodsid int,@auth int)
 returns nvarchar(256) --没有问题的返回'',有问题返回原因 
 AS
 BEGIN
@@ -14,34 +19,58 @@ DECLARE @rs nvarchar(256)
 @oeshortname varchar,
 @odeptid int,
 @ocost decimal(12,4),
-@skutype char(1)='A' --怎么取这个值？
+@skutype char(1), --='A' --怎么取这个值？
+@AdviceQty  decimal (12,3), --自动建议补货量
+@MinOrderQty decimal (12,3),
+@MaxOrdQty decimal (12,3),
+@OrderPKNum1 decimal (12,3)
+
 SET @rs = ''
 SET @shopid = (select ShopID from mySHOPSHStock..PurchaseAsk0 where SheetID=@sheetid)
 select @oqty =pai.Qty,@oename =rtrim(g.ename),@oeshortname = rtrim(g.EShortName),@odeptid=g.DeptID,
-@ocost=pai.Cost
+@ocost=pai.Cost,@AdviceQty= AdviceQty
  from mySHOPSHStock..[PurchaseAskItem0] pai join mySHOPSHStock..Goods g on pai.GoodsID = g.GoodsID where pai.SheetID=@sheetid and @goodsid = pai.GoodsID
 if(isnull(@oqty,0) <=0) 
   return @rs
 
+--最小补货数量判断
+select @MinOrderQty=MinOrderQty,@MaxOrdQty=MaxOrdQty  from mySHOPSHStock.dbo.MinOrder  where goodsid=@goodsid 
+
+
+select  @OrderPKNum1=isnull( b.OrderPKNum1,0)  from myshopshstock..GoodsShop a ,myshopshstock..goodspknum b
+  where a.Logistics=3   and  a.goodsid=@goodsid and ShopId = @shopid and a.dcshopid=b.dcshopid
+  and a.goodsid=b.goodsid
+
+
+
 --订货属性值判断
  --1 店铺
- if ((select count(1) from [dbo].[OrderControl] where [TypeID]=1 and shopid=@shopid and [forbidden]=1)>0)   
-  set @rs = @rs + '此店不允许订货'
-return @rs
+ if ((select count(1) from [dbo].[OrderControl] where [TypeID]=1 and shopid=@shopid and [forbidden]=1)>0) 
+begin  
+    set @rs = @rs + '此店不允许订货'
+  return @rs
+end
+ 
+
 
 --2 毛利属性
- if ((select count(1) from [dbo].[OrderControl] where [TypeID]=2 and shopid=@shopid and code = @oename and [forbidden]=1)>0)   
+ if ((select count(1) from [dbo].[OrderControl] where [TypeID]=2 and shopid=@shopid and code = @oename and [forbidden]=1)>0)
+begin   
   set @rs = @rs + '毛利属性 '+@oename+' 不允许订货'
   return @rs
+end
   --3 销售属性
  if ((select count(1) from [dbo].[OrderControl] where [TypeID]=3 and shopid=@shopid and code =@oeshortname and [forbidden]=1)>0)   
+begin
   set @rs = @rs + '销售属性 '+@oeshortname+' 不允许订货'
   return @rs
+end
   --4 品类店型组
  if ((select count(1) from [dbo].[OrderControl] where [TypeID]=4 and shopid=@shopid and code = @odeptid and subcode = @skutype and [forbidden]=1)>0)   
-  set @rs = @rs +'品类店型组 '+@odeptid+'-'+@skutype+' 不允许订货'
+begin  
+set @rs = @rs +'品类店型组 '+@odeptid+'-'+@skutype+' 不允许订货'
   return @rs
-
+end
 
 
   --用户审批权限属性值 判断
@@ -61,44 +90,84 @@ select
 @limitnum=isnull(fs.[DayUpperlimit] ,0), 
 @limitamt=isnull(fs.[DayUpperlimitAmt],0) 
  from [dbo].[FunctionSetting] fs where 
-fs.FunctionId =@auth  and fs.ShopId = @shopid 
+  fs.FunctionId =@auth  and fs.ShopId = @shopid and GoodsID = @goodsid
 
 
 (select @totalnum=sum(Qty),@totalamt=sum(Qty*Cost) from  mySHOPSHStock..PurchaseAskItem where GoodsID = @goodsid )
-
+  
+ 
 --倍数 与 数量比较
-if(@oqty > @num)
-  set @rs = @rs + '数量不能大于 xx 的多少倍' + convert(varchar,@multiple)
-return @rs
+if(@num =0 or @num is null)
+begin
+    set @rs =  convert(varchar,@goodsid)+ ':商品未设置审批权限' 
+  return @rs
+end
+ 
+--配送规格 判断 与 数量比较
+if (@OrderPKNum1>0 and @oqty%@OrderPKNum1<>0)
+begin
+    set @rs = @rs + '数量必须是配送规格'+convert(varchar,@OrderPKNum1)+'的倍数' 
+  return @rs
+end
+
+--最小补货数量 判断 与 数量比较
+if(@oqty < @MinOrderQty or @oqty%@MinOrderQty<>0  )
+begin
+    set @rs = @rs + '数量必须是最小补货量'+convert(varchar,@MinOrderQty)+'的倍数' 
+  return @rs
+end
 
 --数量 与 数量比较
 if(@oqty > @num)
-  set @rs = @rs + '数量不能大于' + convert(varchar,@num)
-return @rs
+begin
+    set @rs = @rs + '数量不能大于' + convert(varchar,@num)
+  return @rs
+end
 
 --金额比较
 if(@ocost > @amt)
-  set @rs = @rs + '金额不能大于' + convert(varchar,@amt)
-return @rs
+begin
+    set @rs = @rs + '金额不能大于' + convert(varchar,@amt)
+  return @rs
+end
 
 --单日最大数量比较
 if(@oqty+@totalnum> @limitnum  )
-  set @rs = @rs + '每日订货数不能大于' + convert(varchar,@limitnum)
-return @rs
+begin
+    set @rs = @rs + '每日订货数不能大于' + convert(varchar,@limitnum)
+  return @rs
+end
+
 --单日最大金额比较
 if((@oqty*@ocost)+@totalamt > @limitamt  )
-  set @rs = @rs + '每日订货金额不能大于' + convert(varchar,@limitamt)
-return @rs
+begin
+    set @rs = @rs + '每日订货金额不能大于' + convert(varchar,@limitamt)
+  return @rs
+end
 
 RETURN   @rs   
 END
-GO 
+
 
 SELECT   dbo.F_CheckPurchaseItem('1111111111111111',1,1)  as a
  
 
  
+CREATE PROCEDURE SyncMaster
+AS
+BEGIN
+   --同步审批功能设置
+delete from  FunctionSetting;
+insert into  FunctionSetting 
+select * from hqOrderReview..FunctionSetting where ShopId = (select c.value from mySHOPSHStock.dbo.config c where c.Name='本店号'  );
 
+--同步订货属性设置
+delete from  OrderControl ;
+insert into  OrderControl 
+select * from hqOrderReview..OrderControl where ShopId = (select c.value from mySHOPSHStock.dbo.config c where c.Name='本店号'  );
+
+END
+GO
 
 --总部店铺
  select * from mySHOPSHStock..Shop  where ShopType in (11,13) and Enable =1

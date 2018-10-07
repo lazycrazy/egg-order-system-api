@@ -11,6 +11,23 @@ class QueryController extends Controller {
 
 //   console.log(content);
 // })();
+
+
+
+async userDepts() {
+    const { ctx } = this
+    const uid = ctx.state.user.data._id
+    let sql = `
+    select distinct RTRIM(s.id) deptid,RTRIM(s.name) deptname
+ from ${this.config.DBStock}.dbo.usersgroup u left join ${this.config.DBStock}.dbo.sgroup s 
+ on u.sgroupid = s.id
+where
+u.username =(select name from ${this.config.DBConnect}..Login where LoginID = :uid ) order by  RTRIM(s.id)  ,RTRIM(s.name)  `
+    const res = await ctx.model.query(sql,  { replacements: { uid }, type: ctx.model.QueryTypes.SELECT })
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx, res})
+  }
+
   async syncFunctionSetting() { 
     const { ctx } = this
     await this.app.runSchedule('syncFunctionSetting');

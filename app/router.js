@@ -24,6 +24,7 @@ module.exports = app => {
   router.post('/api/query/orderProperty', app.jwt, controller.query.orderProperty)
   router.get('/api/query/rolePermission', app.jwt, controller.query.rolePermission)
   router.get('/api/query/userInfo', app.jwt, controller.query.userInfo)
+  router.get('/api/query/userDepts', app.jwt, controller.query.userDepts)
   
   router.get('/api/sync/user', controller.query.syncUser)
 
