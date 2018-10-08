@@ -116,11 +116,11 @@ WITH originrow AS (SELECT   SheetID, GoodsID, MIN(LogTime) AS logtime
     const fs = await ctx.model.query(`
 SELECT  *
 FROM    (
-SELECT ROW_NUMBER() OVER ( ORDER BY p.CheckDate ) AS RowNum,p.SheetID, p.ShopID, p.ManageDeptID, p.AskType, p.Flag, p.Editor, p.EditDate, p.Operator, p.Checker, p.CheckDate, 
+SELECT ROW_NUMBER() OVER ( ORDER BY p.EditDate ) AS RowNum,p.SheetID, p.ShopID, p.ManageDeptID, p.AskType, p.Flag, p.Editor, p.EditDate, p.Operator, p.Checker, p.CheckDate, 
                 p.Notes, p.PrintCount, s.Name AS ShopName
 FROM      ${this.config.DBStock}.dbo.PurchaseAsk0 AS p LEFT OUTER JOIN
                 ${this.config.DBStock}.dbo.Shop AS s ON p.ShopID = s.ID
-WHERE   (p.ShopId = :shopid) ${cdi} ) as resultRows
+WHERE   (p.ShopId = :shopid) ${cdi.replace(/CheckDate/g, 'EditDate')} ) as resultRows
 WHERE   RowNum between :index and :count
 ORDER BY RowNum
 `,  { replacements: { shopid: payload.shopid, sheetid: payload.sheetid, editDateS: payload.editDateS, editDateE: payload.editDateE, index: (payload.curpage - 1) * payload.pagesize + 1, count: (payload.curpage) * payload.pagesize}, type: ctx.model.QueryTypes.SELECT })
@@ -128,7 +128,7 @@ ORDER BY RowNum
     	SELECT count(1) as value 
 FROM      ${this.config.DBStock}.dbo.PurchaseAsk0 AS p LEFT OUTER JOIN
                 ${this.config.DBStock}.dbo.Shop AS s ON p.ShopID = s.ID
-WHERE   (p.ShopId = :shopid) ${cdi} 
+WHERE   (p.ShopId = :shopid) ${cdi.replace(/CheckDate/g, 'EditDate')} 
        `,  { replacements: { shopid: payload.shopid, sheetid: payload.sheetid, editDateS: payload.editDateS, editDateE: payload.editDateE }, type: ctx.model.QueryTypes.SELECT })
     
     //查询正式表
