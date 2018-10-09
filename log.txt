@@ -1,11 +1,11 @@
 USE [scOrderReview]
 GO
-/****** 对象:  UserDefinedFunction [dbo].[F_CheckPurchaseItem]    脚本日期: 10/07/2018 11:19:09 ******/
+/****** 对象:  UserDefinedFunction [dbo].[F_CheckPurchaseItem]    脚本日期: 10/09/2018 17:51:12 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-  
+ 
 --单号,商品id,操作人
 ALTER  FUNCTION [dbo].[F_CheckPurchaseItem](@sheetid char(16),@goodsid int,@auth int)
 returns nvarchar(256) --没有问题的返回'',有问题返回原因 
@@ -32,13 +32,15 @@ select @oqty =pai.Qty,@oename =rtrim(g.ename),@oeshortname = rtrim(g.EShortName)
  from mySHOPSHStock..[PurchaseAskItem0] pai join mySHOPSHStock..Goods g on pai.GoodsID = g.GoodsID where pai.SheetID=@sheetid and @goodsid = pai.GoodsID
 if(isnull(@oqty,0) <=0) 
   return @rs
-
+ 
+ 
 --最小补货数量判断
-select @MinOrderQty=MinOrderQty,@MaxOrdQty=MaxOrdQty  from mySHOPSHStock.dbo.MinOrder  where goodsid=@goodsid 
+select @MinOrderQty=MinOrderQty,@MaxOrdQty=MaxOrdQty  from mySHOPSHStock.dbo.MinOrder 
+ where ShopID=@shopid and goodsid=@goodsid 
 
 
 select  @OrderPKNum1=isnull( b.OrderPKNum1,0)  from myshopshstock..GoodsShop a ,myshopshstock..goodspknum b
-  where a.Logistics=3   and  a.goodsid=@goodsid and ShopId = @shopid and a.dcshopid=b.dcshopid
+  where a.Logistics=3   and  a.goodsid=@goodsid and a.ShopId = @shopid and a.dcshopid=b.dcshopid
   and a.goodsid=b.goodsid
 
 
@@ -54,13 +56,13 @@ end
 
 
 --2 毛利属性
- if ((select count(1) from [dbo].[OrderControl] where [TypeID]=2 and shopid=@shopid and code = @oename and [forbidden]=1)>0)
+ if ((select count(1) from [dbo].[OrderControl] where [TypeID]=3 and shopid=@shopid and code = @oename and [forbidden]=1)>0)
 begin   
   set @rs = @rs + '毛利属性 '+@oename+' 不允许订货'
   return @rs
 end
   --3 销售属性
- if ((select count(1) from [dbo].[OrderControl] where [TypeID]=3 and shopid=@shopid and code =@oeshortname and [forbidden]=1)>0)   
+ if ((select count(1) from [dbo].[OrderControl] where [TypeID]=2 and shopid=@shopid and code =@oeshortname and [forbidden]=1)>0)   
 begin
   set @rs = @rs + '销售属性 '+@oeshortname+' 不允许订货'
   return @rs
@@ -149,9 +151,41 @@ RETURN   @rs
 END
 
 
+
+
 SELECT   dbo.F_CheckPurchaseItem('1111111111111111',1,1)  as a
  
 
+--导入总部用户
+insert into hqOrderReview..Login ([LoginID]
+      ,[Name]
+      ,[CName]
+      ,[password]
+      ,[EnableFlag]
+      ,[Note]
+      ,[LastModifyDT]
+      ,[IsAdmin])
+      select  [LoginID],[Name],[CName],[Name],1,note,getdate(),0  from mySHOPHQConnect..Login a where EnableFlag =1
+      and
+      not exists (select 1 from  hqOrderReview..Login b where a.LoginID =b.LoginID);
+    update hqOrderReview..Login set IsAdmin =1 where Name='system';
+
+    --导入店铺用户
+    insert into scOrderReview..Login ([LoginID]
+      ,[Name]
+      ,[CName]
+      ,[password]
+      ,[EnableFlag]
+      ,[Note]
+      ,[LastModifyDT]
+      ,[IsAdmin])
+      select  [LoginID],[Name],[CName],[Name],1,note,getdate(),0  from mySHOPSHConnect..Login a where EnableFlag =1
+      and
+      not exists (select 1 from  scOrderReview..Login b where a.LoginID =b.LoginID);
+     update scOrderReview..Login set IsAdmin =1 where Name='system';
+     
+     --下载主档
+     exec SyncMaster
  
 CREATE PROCEDURE SyncMaster
 AS
@@ -189,16 +223,3 @@ select * from mySHOPSHStock..GoodsPKNum --配送商品
 总部和店铺的库名区分
 
 
-
-
-  insert into ${DBOrderReview}..Login ([LoginID]
-      ,[Name]
-      ,[CName]
-      ,[password]
-      ,[EnableFlag]
-      ,[Note]
-      ,[LastModifyDT]
-      ,[IsAdmin])
-  select  [LoginID],[Name],[CName],[Name],1,note,getdate(),0  from ${DBConnect}..Login a where EnableFlag =1
-  and
-  not exists (select 1 from ${DBOrderReview}..Login b where a.LoginID =b.LoginID)

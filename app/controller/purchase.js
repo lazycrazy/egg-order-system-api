@@ -5,6 +5,17 @@ class PurchaseController extends Controller {
     super(ctx)
   } 
 
+  async reject() {
+    const { ctx } = this
+    const payload = ctx.request.body || {}     
+    const usql = `UPDATE ${this.config.DBStock}.[dbo].[PurchaseAsk0]
+   SET Flag = 99   WHERE  
+      [SheetID] = :sheetid
+`
+    const res = await ctx.model.query(usql,  {replacements: { sheetid: payload.sheetid }, type: ctx.model.QueryTypes.UPDATE })
+    ctx.helper.success({ ctx, res }) 
+  }
+
    async updateItemAndLog() {
     const { ctx } = this
     const payload = ctx.request.body || {}
@@ -173,7 +184,7 @@ SELECT ROW_NUMBER() OVER ( ORDER BY p.EditDate ) AS RowNum,p.SheetID, p.ShopID, 
 FROM      ${this.config.DBStock}.dbo.PurchaseAsk0 AS p LEFT OUTER JOIN
                 ${this.config.DBStock}.dbo.Shop AS s ON p.ShopID = s.ID LEFT OUTER JOIN
                 ${this.config.DBStock}.dbo.SGroup AS sg on p.ManageDeptID = sg.id
-WHERE   (p.ShopId = :shopid) ${cdi} ) as resultRows
+WHERE  p.Flag<> 99 and (p.ShopId = :shopid) ${cdi} ) as resultRows
 WHERE   RowNum between :index and :count
 ORDER BY RowNum
 `,  { replacements: { shopid: payload.shopid, depts, index: (payload.curpage - 1) * payload.pagesize + 1, count: (payload.curpage) * payload.pagesize}, type: ctx.model.QueryTypes.SELECT })

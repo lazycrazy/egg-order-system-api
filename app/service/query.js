@@ -34,6 +34,11 @@ WHERE   (Name = '本店号')
     return res[0].value
   }
 
+  async syncMaster() {
+    const { ctx } = this
+    await ctx.model.query(`  exec ${this.config.DBOrderReview}..SyncMaster `,  { replacements: { }, type: ctx.model.QueryTypes.INSERT })
+  }
+
   async syncUser() {
     const { ctx } = this
     await ctx.model.query(`  insert into ${this.config.DBOrderReview}..Login ([LoginID]

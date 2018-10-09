@@ -47,6 +47,13 @@ u.username =(select name from ${this.config.DBConnect}..Login where LoginID = :u
     ctx.helper.success({ctx})
   }
 
+  async syncMaster() {
+    const { ctx } = this
+    await this.app.runSchedule('syncMaster');
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx})
+  }
+
   async userInfo() {
     const { ctx } = this
     const uid = ctx.state.user.data._id

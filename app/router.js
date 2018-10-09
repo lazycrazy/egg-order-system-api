@@ -76,9 +76,11 @@ module.exports = app => {
     router.post('/api/purchase/review', app.jwt, controller.purchase.review)
     router.post('/api/purchase/sheetLog', app.jwt, controller.purchase.sheetLog)
     router.post('/api/purchase/updateItemAndLog', app.jwt, controller.purchase.updateItemAndLog)
+    router.post('/api/purchase/reject', app.jwt, controller.purchase.reject)
 
-    router.get('/api/sync/fs', controller.query.syncFunctionSetting)
-    router.get('/api/sync/oc', controller.query.syncOrderControl)
+    // router.get('/api/sync/fs', controller.query.syncFunctionSetting)
+    // router.get('/api/sync/oc', controller.query.syncOrderControl)
+    router.get('/api/sync/master', controller.query.syncMaster)
   }
 
   if(app.config.IsHQ) {

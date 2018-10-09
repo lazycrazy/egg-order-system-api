@@ -3,7 +3,7 @@ module.exports = app => {
     schedule: {
       interval: '1h',
       type: 'worker',
-      disable: app.config.IsHQ
+      disable: true //app.config.IsHQ
     },
     async task(ctx) {
 		const shopid = await ctx.service.query.curShopId()
