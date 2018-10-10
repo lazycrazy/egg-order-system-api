@@ -123,6 +123,13 @@ FROM ${this.config.DBOrderReview}.dbo.FunctionSetting AS fs WHERE   (fs.ShopId =
   async functionSetting() {
     const { ctx } = this
     const payload = ctx.request.body
+    let cdi =''
+    if(payload.goodsid){
+      cdi += " (fs.GoodsId = :goodsid ) and "
+    }
+    if(payload.deptid){
+      cdi += " (fs.DeptId like :deptid+'%' ) and "
+    }
     const fs = await ctx.model.query(`
 SELECT  *
 FROM    (
@@ -136,15 +143,15 @@ FROM      ${this.config.DBOrderReview}.dbo.FunctionSetting AS fs INNER JOIN
                 ${this.config.DBStock}.dbo.SGroup AS e ON LEFT(fs.DeptId, 2) = e.ID LEFT OUTER JOIN
                 ${this.config.DBStock}.dbo.MinOrder as mo on s.id= mo.shopid and g.GoodsID = mo.goodsid LEFT OUTER JOIN
                 ${this.config.DBStock}.dbo.Cost as c on s.id = c.shopid and g.goodsid = c.goodsid and c.flag=0
-WHERE   (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)) as resultRows
+WHERE ${cdi} (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)) as resultRows
 WHERE   RowNum between :index and :count
 ORDER BY RowNum
-`,  { replacements: { shopid: payload.shopid, functionid: parseInt(payload.funcid), index: (payload.curpage - 1) * payload.pagesize + 1, count: (payload.curpage) * payload.pagesize}, type: ctx.model.QueryTypes.SELECT })
+`,  { replacements: { shopid: payload.shopid, goodsid: payload.goodsid, deptid: payload.deptid, functionid: parseInt(payload.funcid), index: (payload.curpage - 1) * payload.pagesize + 1, count: (payload.curpage) * payload.pagesize}, type: ctx.model.QueryTypes.SELECT })
     const rs = await ctx.model.query(`SELECT count(1) value
 FROM      ${this.config.DBOrderReview}.dbo.FunctionSetting AS fs INNER JOIN
                 ${this.config.DBStock}.dbo.Goods AS g ON fs.GoodsId = g.GoodsID INNER JOIN
                 ${this.config.DBStock}.dbo.Shop AS s ON fs.ShopId = s.ID 
-WHERE   (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)`,  { replacements: { shopid: payload.shopid, functionid: parseInt(payload.funcid) }, type: ctx.model.QueryTypes.SELECT })
+WHERE  ${cdi}  (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)`,  { replacements: { shopid: payload.shopid, goodsid: payload.goodsid, deptid: payload.deptid, functionid: parseInt(payload.funcid) }, type: ctx.model.QueryTypes.SELECT })
     ctx.logger.debug('fs:'+JSON.stringify(fs))
     ctx.logger.debug('rs'+JSON.stringify(rs))
     const res = { fs, total: rs[0].value }
