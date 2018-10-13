@@ -84,6 +84,7 @@ WITH originrow AS (SELECT   SheetID, GoodsID, MIN(LogTime) AS logtime
     const { ctx } = this
     const payload = ctx.request.body
     const auth = payload.auth
+    const lr = payload.lr
     let cdi = ''
     let cdiAuth = ''
     if(payload.checkAuth){
@@ -113,7 +114,10 @@ WITH originrow AS (SELECT   SheetID, GoodsID, MIN(LogTime) AS logtime
 
     cdi += cdiAuth
     //查询0表
-    const fs = await ctx.model.query(`
+    let fs = []
+    let total = 0
+    if(lr === 2 || lr === 0) {
+      fs = await ctx.model.query(`
 SELECT  *
 FROM    (
 SELECT ROW_NUMBER() OVER ( ORDER BY p.EditDate ) AS RowNum,p.SheetID, p.ShopID, p.ManageDeptID, p.AskType, p.Flag, p.Editor, p.EditDate, p.Operator, p.Checker, p.CheckDate, 
@@ -130,9 +134,13 @@ FROM      ${this.config.DBStock}.dbo.PurchaseAsk0 AS p LEFT OUTER JOIN
                 ${this.config.DBStock}.dbo.Shop AS s ON p.ShopID = s.ID
 WHERE   (p.ShopId = :shopid) ${cdi.replace(/CheckDate/g, 'EditDate')} 
        `,  { replacements: { shopid: payload.shopid, sheetid: payload.sheetid, editDateS: payload.editDateS, editDateE: payload.editDateE }, type: ctx.model.QueryTypes.SELECT })
-    
+      total = rs[0].value
+    }
     //查询正式表
-    const fs1 = await ctx.model.query(`
+    let fs1 = []
+    let total1 = 0
+    if(lr === 2 || lr === 1) {
+      fs1 = await ctx.model.query(`
 SELECT  *
 FROM    (
 SELECT ROW_NUMBER() OVER ( ORDER BY p.CheckDate ) AS RowNum,p.SheetID, p.ShopID, p.ManageDeptID, p.AskType, p.Flag, p.Editor, p.EditDate, p.Operator, p.Checker, p.CheckDate, 
@@ -142,13 +150,15 @@ FROM      ${this.config.DBStock}.dbo.PurchaseAsk AS p LEFT OUTER JOIN
 WHERE   (p.ShopId = :shopid) ${cdi} ) as resultRows
 WHERE   RowNum between :index and :count
 ORDER BY RowNum
-`,  { replacements: { shopid: payload.shopid, sheetid: payload.sheetid, editDateS: payload.editDateS, editDateE: payload.editDateE, index: (payload.curpage - 1) * payload.pagesize + 1, count: (payload.curpage) * payload.pagesize}, type: ctx.model.QueryTypes.SELECT })
+`,  { replacements: { shopid: payload.shopid, sheetid: payload.sheetid, editDateS: payload.editDateS, editDateE: payload.editDateE, index: (payload.curpage_x - 1) * payload.pagesize_x + 1, count: (payload.curpage_x) * payload.pagesize_x}, type: ctx.model.QueryTypes.SELECT })
     const rs1 = await ctx.model.query(`
       SELECT count(1) as value 
 FROM      ${this.config.DBStock}.dbo.PurchaseAsk AS p LEFT OUTER JOIN
                 ${this.config.DBStock}.dbo.Shop AS s ON p.ShopID = s.ID
 WHERE   (p.ShopId = :shopid) ${cdi} `,  { replacements: { shopid: payload.shopid, sheetid: payload.sheetid, editDateS: payload.editDateS, editDateE: payload.editDateE }, type: ctx.model.QueryTypes.SELECT })
-    const res = { fs, total: rs[0].value, fs1, total1: rs1[0].value  }
+      total1 = rs1[0].value
+    }
+    const res = { fs, total, fs1, total1 }
 
     ctx.logger.debug('res'+JSON.stringify(res))
     // 设置响应内容和响应状态码

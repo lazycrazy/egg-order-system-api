@@ -1,6 +1,6 @@
 USE [scOrderReview]
 GO
-/****** 对象:  UserDefinedFunction [dbo].[F_CheckPurchaseItem]    脚本日期: 10/09/2018 17:51:12 ******/
+/****** 对象:  UserDefinedFunction [dbo].[F_CheckPurchaseItem]    脚本日期: 10/13/2018 14:10:33 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -21,15 +21,16 @@ DECLARE @rs nvarchar(256)
 @ocost decimal(12,4),
 @skutype char(1), --='A' --怎么取这个值？
 @AdviceQty  decimal (12,3), --自动建议补货量
-@MinOrderQty decimal (12,3),
-@MaxOrdQty decimal (12,3),
+@MinOrderQty decimal (20,3),
+@MaxOrdQty decimal (20,3),
 @OrderPKNum1 decimal (12,3)
 
 SET @rs = ''
 SET @shopid = (select ShopID from mySHOPSHStock..PurchaseAsk0 where SheetID=@sheetid)
-select @oqty =pai.Qty,@oename =rtrim(g.ename),@oeshortname = rtrim(g.EShortName),@odeptid=g.DeptID,
+select @oqty =pai.Qty,@oename =rtrim(g.ename),@oeshortname = rtrim(g.EShortName),@odeptid=left(g.DeptID,2),
 @ocost=pai.Cost,@AdviceQty= AdviceQty
  from mySHOPSHStock..[PurchaseAskItem0] pai join mySHOPSHStock..Goods g on pai.GoodsID = g.GoodsID where pai.SheetID=@sheetid and @goodsid = pai.GoodsID
+
 if(isnull(@oqty,0) <=0) 
   return @rs
  
@@ -38,6 +39,10 @@ if(isnull(@oqty,0) <=0)
 select @MinOrderQty=MinOrderQty,@MaxOrdQty=MaxOrdQty  from mySHOPSHStock.dbo.MinOrder 
  where ShopID=@shopid and goodsid=@goodsid 
 
+if (@MaxOrdQty>999999)
+begin
+  set @MaxOrdQty=999999
+end
 
 select  @OrderPKNum1=isnull( b.OrderPKNum1,0)  from myshopshstock..GoodsShop a ,myshopshstock..goodspknum b
   where a.Logistics=3   and  a.goodsid=@goodsid and a.ShopId = @shopid and a.dcshopid=b.dcshopid
@@ -56,21 +61,21 @@ end
 
 
 --2 毛利属性
- if ((select count(1) from [dbo].[OrderControl] where [TypeID]=3 and shopid=@shopid and code = @oename and [forbidden]=1)>0)
+ if ((select count(1) from [dbo].[OrderControl] where [TypeID]=3 and shopid=@shopid and code = @oeshortname and [forbidden]=1)>0)
 begin   
-  set @rs = @rs + '毛利属性 '+@oename+' 不允许订货'
+  set @rs = @rs + '毛利属性 '+@oeshortname+' 不允许订货'
   return @rs
 end
   --3 销售属性
- if ((select count(1) from [dbo].[OrderControl] where [TypeID]=2 and shopid=@shopid and code =@oeshortname and [forbidden]=1)>0)   
+ if ((select count(1) from [dbo].[OrderControl] where [TypeID]=2 and shopid=@shopid and code = @oename and [forbidden]=1)>0)   
 begin
-  set @rs = @rs + '销售属性 '+@oeshortname+' 不允许订货'
+  set @rs = @rs + '销售属性 '+@oename+' 不允许订货'
   return @rs
 end
   --4 品类店型组
- if ((select count(1) from [dbo].[OrderControl] where [TypeID]=4 and shopid=@shopid and code = @odeptid and subcode = @skutype and [forbidden]=1)>0)   
+ if ((select count(1) from [dbo].[OrderControl] where [TypeID]=4 and shopid=@shopid and code = @odeptid   and [forbidden]=1)>0)   
 begin  
-set @rs = @rs +'品类店型组 '+@odeptid+'-'+@skutype+' 不允许订货'
+set @rs = @rs +'品类店型组 '+Convert(varchar(30),@odeptid)+' 不允许订货'
   return @rs
 end
 
@@ -153,6 +158,7 @@ END
 
 
 
+
 SELECT   dbo.F_CheckPurchaseItem('1111111111111111',1,1)  as a
  
 
@@ -169,6 +175,7 @@ insert into hqOrderReview..Login ([LoginID]
       and
       not exists (select 1 from  hqOrderReview..Login b where a.LoginID =b.LoginID);
     update hqOrderReview..Login set IsAdmin =1 where Name='system';
+    update hqOrderReview..Login set password =rtrim(password);
 
     --导入店铺用户
     insert into scOrderReview..Login ([LoginID]
@@ -183,6 +190,7 @@ insert into hqOrderReview..Login ([LoginID]
       and
       not exists (select 1 from  scOrderReview..Login b where a.LoginID =b.LoginID);
      update scOrderReview..Login set IsAdmin =1 where Name='system';
+     update scOrderReview..Login set password =rtrim(password);
      
      --下载主档
      exec SyncMaster

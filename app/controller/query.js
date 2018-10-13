@@ -287,7 +287,7 @@ FROM      ${this.config.DBStock}.dbo.Shop AS a LEFT OUTER JOIN
                 b.TypeID = 1 AND b.ShopID = a.ID
 WHERE   (a.ShopType in (11,13) and a.Enable =1) and a.ID in (:sps)`, { replacements:{ sps }, type: ctx.model.QueryTypes.SELECT})
     ctx.logger.debug('shop list ' + JSON.stringify(shops))
-    const mlsxs = await  ctx.model.query(`WITH mlsx AS (SELECT DISTINCT EName
+    const mlsxs = await  ctx.model.query(`WITH mlsx AS (SELECT DISTINCT ltrim(rtrim(EName)) ename
                          FROM      ${this.config.DBStock}.dbo.Goods AS a
                          WHERE   (EName IS NOT NULL) AND (LEN(EShortName) < 4))
     SELECT   CONVERT(bit, (CASE WHEN o.forbidden IS NULL THEN 1 ELSE 0 END)) AS isnew, 2 type, s.ID AS shopid, 
@@ -298,7 +298,7 @@ WHERE   (a.ShopType in (11,13) and a.Enable =1) and a.ID in (:sps)`, { replaceme
                     ${this.config.DBOrderReview}.dbo.OrderControl AS o ON o.TypeID = 2 AND s.ID = o.ShopID AND o.Code = m.EName
     WHERE   (s.ShopType IN (11, 13)) AND (s.Enable = 1) and s.ID in (:sps)
     ORDER BY shopid, sxid`, { replacements:{ sps }, type: ctx.model.QueryTypes.SELECT}) 
-    const xssxs = await  ctx.model.query(`WITH xssx AS (SELECT DISTINCT EShortName
+    const xssxs = await  ctx.model.query(`WITH xssx AS (SELECT DISTINCT ltrim(rtrim(EShortName)) EShortName 
                          FROM      ${this.config.DBStock}.dbo.Goods AS a
                          WHERE   (EName IS NOT NULL) AND (LEN(EShortName) < 4))
     SELECT   CONVERT(bit, (CASE WHEN o.forbidden IS NULL THEN 1 ELSE 0 END)) AS isnew, 3 type, s.ID AS shopid, 
