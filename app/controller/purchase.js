@@ -174,6 +174,9 @@ where pm.LoginID=  :userid
     if(payload.depts && payload.depts.length > 0){
       depts = payload.depts
     } 
+    if(payload.sheetid && payload.sheetid.trim().length > 0){
+      cdi += " and p.sheetid = :sheetid "
+    } 
     cdi += " and p.ManageDeptID in (:depts) "
 
     const fs = await ctx.model.query(`
@@ -187,10 +190,10 @@ FROM      ${this.config.DBStock}.dbo.PurchaseAsk0 AS p LEFT OUTER JOIN
 WHERE  p.Flag<> 99 and (p.ShopId = :shopid) ${cdi} ) as resultRows
 WHERE   RowNum between :index and :count
 ORDER BY RowNum
-`,  { replacements: { shopid: payload.shopid, depts, index: (payload.curpage - 1) * payload.pagesize + 1, count: (payload.curpage) * payload.pagesize}, type: ctx.model.QueryTypes.SELECT })
+`,  { replacements: { shopid: payload.shopid, depts, sheetid: payload.sheetid, index: (payload.curpage - 1) * payload.pagesize + 1, count: (payload.curpage) * payload.pagesize}, type: ctx.model.QueryTypes.SELECT })
     const rs = await ctx.model.query(`
     	SELECT count(1) as value FROM ${this.config.DBStock}.dbo.PurchaseAsk0 AS p
-where p.Flag<> 99 and p.ShopID=:shopid ${cdi} `,  { replacements: { shopid: payload.shopid, depts }, type: ctx.model.QueryTypes.SELECT })
+where p.Flag<> 99 and p.ShopID=:shopid ${cdi} `,  { replacements: { shopid: payload.shopid, depts, sheetid: payload.sheetid }, type: ctx.model.QueryTypes.SELECT })
     const res = { fs, total: rs[0].value }
     ctx.logger.debug('res'+JSON.stringify(res))
     // 设置响应内容和响应状态码

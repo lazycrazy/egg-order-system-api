@@ -15,8 +15,8 @@ DECLARE @rs nvarchar(256)
 ,
 @shopid char(4),
 @oqty decimal(12,3),
-@oename varchar,
-@oeshortname varchar,
+@oename varchar(3),
+@oeshortname varchar(3),
 @odeptid int,
 @ocost decimal(12,4),
 @skutype char(1), --='A' --怎么取这个值？

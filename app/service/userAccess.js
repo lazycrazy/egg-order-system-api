@@ -35,7 +35,7 @@ class UserAccessService extends Service {
 
     let verifyPsw = await ctx.compare(values.oldPassword.trim(), await ctx.genHash(user.password.trim())) 
     if (!verifyPsw) {
-      ctx.throw(404, 'user password error')
+      ctx.throw(404, '用户密码错误')
     } else {
       // 重置密码
       //values.password = await ctx.genHash(values.password)

@@ -8,7 +8,7 @@ class QueryService extends Service {
 SELECT   Value AS shopid,
                     (SELECT   COUNT(1) AS Expr1
                      FROM      ${this.config.DBStock}.dbo.PurchaseAsk0 AS pa
-                     WHERE   EXISTS
+                     WHERE pa.Flag<> 99 and  EXISTS
                                          (SELECT   1 AS Expr1
                                           FROM      ${this.config.DBOrderReview}.dbo.PurchaseControlItemLogs AS l
                                           WHERE   (pa.SheetID = SheetID) AND (l.serialid = -12))) AS count

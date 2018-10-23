@@ -125,7 +125,7 @@ FROM ${this.config.DBOrderReview}.dbo.FunctionSetting AS fs WHERE   (fs.ShopId =
     const payload = ctx.request.body
     let cdi =''
     if(payload.goodsid){
-      cdi += " (fs.GoodsId = :goodsid ) and "
+      cdi += " (fs.GoodsId = (select GoodsID from mySHOPSHStock.dbo.Goods where CustomNo=:goodsid) ) and "
     }
     if(payload.deptid){
       cdi += " (fs.DeptId like :deptid+'%' ) and "
@@ -178,11 +178,11 @@ WHERE  ${cdi}  (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)`,  { repl
     const { ctx } = this
     const payload = ctx.params
 
-    const goods = await ctx.model.query(`WITH goods AS (SELECT   gs.GoodsID AS goods_id, RTRIM(g.BarcodeID) AS barcode_id, RTRIM(g.Name) AS goods_name, 
+    const goods = await ctx.model.query(`WITH goods AS (SELECT  rtrim(g.customno) customno, gs.GoodsID AS goods_id, RTRIM(g.BarcodeID) AS barcode_id, RTRIM(g.Name) AS goods_name, 
                                            g.DeptID AS dept_id, RTRIM(d.Name) AS dept_name, CAST(LEFT(g.DeptID, 4) AS int) AS z_id, 
                                            RTRIM(z.Name) AS z_name, CAST(LEFT(g.DeptID, 3) AS int) AS da_id, RTRIM(da.Name) AS da_name, 
                                            CAST(LEFT(g.DeptID, 2) AS int) AS k_id, RTRIM(k.Name) AS k_name, CAST(LEFT(g.DeptID, 1) AS int) 
-                                           AS b_id, RTRIM(b.Name) AS b_name
+                                           AS b_id, RTRIM(b.Name) AS b_name,g.DeptID goods_deptid
                            FROM      ${this.config.DBStock}.dbo.GoodsShop AS gs INNER JOIN
                                            ${this.config.DBStock}.dbo.Goods AS g ON gs.GoodsID = g.GoodsID LEFT OUTER JOIN
                                            ${this.config.DBStock}.dbo.Dept AS d ON g.DeptID = d.ID LEFT OUTER JOIN
@@ -191,23 +191,23 @@ WHERE  ${cdi}  (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)`,  { repl
                                            ${this.config.DBStock}.dbo.SGroup AS k ON k.ID = LEFT(g.DeptID, 2) LEFT OUTER JOIN
                                            ${this.config.DBStock}.dbo.SGroup AS b ON b.ID = LEFT(g.DeptID, 1)
                            WHERE   (gs.Flag IN (0, 8)) AND (gs.ShopID = :shopid))
-    SELECT   type, id,cast(id as varchar)  +' - '+ label label, pid
-    FROM      (SELECT DISTINCT 1 AS type, b_id AS id, b_name AS label, NULL AS pid
+    SELECT   type, id,customno  +' - '+ label label, pid, customno, goods_deptid
+    FROM      (SELECT DISTINCT 1 AS type, b_id AS id, cast(b_id as varchar) customno, b_id goods_deptid, b_name AS label, NULL AS pid
                      FROM      goods
                      UNION
-                     SELECT DISTINCT 2 AS type, k_id AS id, k_name AS label, b_id AS pid
+                     SELECT DISTINCT 2 AS type, k_id AS id, cast(k_id as varchar) customno, k_id goods_deptid, k_name AS label, b_id AS pid
                      FROM      goods
                      UNION
-                     SELECT DISTINCT 3 AS type, da_id AS id, da_name AS label, k_id AS pid
+                     SELECT DISTINCT 3 AS type, da_id AS id, cast(da_id as varchar) customno, da_id goods_deptid, da_name AS label, k_id AS pid
                      FROM      goods
                      UNION
-                     SELECT DISTINCT 4 AS type, z_id AS id, z_name AS label, da_id AS pid
+                     SELECT DISTINCT 4 AS type, z_id AS id, cast(z_id as varchar) customno, z_id goods_deptid, z_name AS label, da_id AS pid
                      FROM      goods
                      UNION
-                     SELECT DISTINCT 5 AS type, dept_id AS id, dept_name AS label, z_id AS pid
+                     SELECT DISTINCT 5 AS type, dept_id AS id, cast(dept_id as varchar) customno, dept_id goods_deptid, dept_name AS label, z_id AS pid
                      FROM      goods
                      UNION
-                     SELECT   6 AS type, goods_id AS id, goods_name AS label, dept_id AS pid
+                     SELECT   6 AS type, goods_id AS id, customno, goods_deptid, goods_name AS label, dept_id AS pid
                      FROM      goods) AS a
     ORDER BY pid, id`, { replacements: { shopid: payload.shopid}, type: ctx.model.QueryTypes.SELECT })
     const res = goods
