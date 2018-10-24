@@ -125,7 +125,7 @@ FROM ${this.config.DBOrderReview}.dbo.FunctionSetting AS fs WHERE   (fs.ShopId =
     const payload = ctx.request.body
     let cdi =''
     if(payload.goodsid){
-      cdi += " (fs.GoodsId = (select GoodsID from mySHOPSHStock.dbo.Goods where CustomNo=:goodsid) ) and "
+      cdi += ` (fs.GoodsId = (select GoodsID from ${this.config.DBStock}.dbo.Goods where (rtrim(substring(CustomNo, patindex('%[^0]%',CustomNo),20)))=(substring(:goodsid, patindex('%[^0]%',:goodsid),20))) ) and `
     }
     if(payload.deptid){
       cdi += " (fs.DeptId like :deptid+'%' ) and "
