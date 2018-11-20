@@ -11,11 +11,11 @@ class UserAccessService extends Service {
     // ctx.logger.debug('hash' + await ctx.genHash('1234'));
 
     if(!user){
-      ctx.throw(404, 'user not found')
+      ctx.throw(404, '用户不存在')
     }
     let verifyPsw = await ctx.compare(payload.password.trim(), await ctx.genHash(user.password.trim()))
     if(!verifyPsw) {
-      ctx.throw(404, 'user password is error')
+      ctx.throw(404, '用户密码错误')
     }
     // 生成Token令牌
     return { token: await service.actionToken.apply(user.LoginID) }

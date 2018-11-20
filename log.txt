@@ -192,24 +192,24 @@ insert into hqOrderReview..Login ([LoginID]
      update scOrderReview..Login set IsAdmin =1 where Name='system';
      update scOrderReview..Login set password =rtrim(password);
      
-     --下载主档
-     exec SyncMaster
- 
-CREATE PROCEDURE SyncMaster
+--下载主档
+alter PROCEDURE SyncMaster
 AS
 BEGIN
    --同步审批功能设置
 delete from  FunctionSetting;
 insert into  FunctionSetting 
-select * from hqOrderReview..FunctionSetting where ShopId = (select c.value from mySHOPSHStock.dbo.config c where c.Name='本店号'  );
+select * from [10.2.0.234].hqOrderReview.dbo.FunctionSetting where ShopId = (select c.value from mySHOPSHStock.dbo.config c where c.Name='本店号'  );
 
 --同步订货属性设置
 delete from  OrderControl ;
 insert into  OrderControl 
-select * from hqOrderReview..OrderControl where ShopId = (select c.value from mySHOPSHStock.dbo.config c where c.Name='本店号'  );
+select * from [10.2.0.234].hqOrderReview.dbo.OrderControl where ShopId = (select c.value from mySHOPSHStock.dbo.config c where c.Name='本店号'  );
 
 END
 GO
+
+exec SyncMaster
 
 --总部店铺
  select * from mySHOPSHStock..Shop  where ShopType in (11,13) and Enable =1
