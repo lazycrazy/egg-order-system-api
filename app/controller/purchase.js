@@ -121,6 +121,110 @@ INSERT INTO ${this.config.DBOrderReview}.[dbo].[PurchaseControlItemLogs]
 
   }
 
+  async deleteItemAndLog() {
+    const { ctx } = this
+    const payload = ctx.request.body || {}
+    const isql = ` 
+INSERT INTO ${this.config.DBOrderReview}.[dbo].[PurchaseControlItemLogs]
+           ([LogTime]
+           ,[LogUserID]
+           ,[LogDesc]
+           ,[SheetID]
+           ,[serialid]
+           ,[GoodsID]
+           ,[PKNum]
+           ,[Qty]
+           ,[PKName]
+           ,[PKSpec]
+           ,[BarcodeID]
+           ,[Cost]
+           ,[Price]
+           ,[StockQty]
+           ,[SaleDate]
+           ,[ReceiptDate]
+           ,[PromotionType]
+           ,[NewFlag]
+           ,[Notes]
+           ,[MonthSaleQty]
+           ,[LastWeekSaleQty]
+           ,[KSDays]
+           ,[InputGoodsId]
+           ,[OrdDay]
+           ,[MakeUpInterval]
+           ,[DeliverDay]
+           ,[AdviceQty]
+           ,[SSQ]
+           ,[retdcflag]
+           ,[DeliveryAddr]
+           ,[SafeInventoryDay]
+           ,[COV]
+           ,[CanSaleQty]
+           ,[OpenTransQty]
+           ,[LastyearSaleQty]
+           ,[MakeupDays]
+           ,[LastTotalSaleQty]) 
+           select getdate(),:userid,:desc,[SheetID]
+           ,[serialid]
+           ,[GoodsID]
+           ,[PKNum]
+           ,[Qty]
+           ,[PKName]
+           ,[PKSpec]
+           ,[BarcodeID]
+           ,[Cost]
+           ,[Price]
+           ,[StockQty]
+           ,[SaleDate]
+           ,[ReceiptDate]
+           ,[PromotionType]
+           ,[NewFlag]
+           ,[Notes]
+           ,[MonthSaleQty]
+           ,[LastWeekSaleQty]
+           ,[KSDays]
+           ,[InputGoodsId]
+           ,[OrdDay]
+           ,[MakeUpInterval]
+           ,[DeliverDay]
+           ,[AdviceQty]
+           ,[SSQ]
+           ,[retdcflag]
+           ,[DeliveryAddr]
+           ,[SafeInventoryDay]
+           ,[COV]
+           ,[CanSaleQty]
+           ,[OpenTransQty]
+           ,[LastyearSaleQty]
+           ,[MakeupDays]
+           ,[LastTotalSaleQty] from
+           ${this.config.DBStock}..PurchaseAskItem0 i
+           where
+           SheetID=:sheetid and GoodsID = :goodsid
+`
+    const dsql = `delete from ${this.config.DBStock}.[dbo].[PurchaseAskItem0]
+   WHERE  
+      [SheetID] = :sheetid
+      and 
+      [GoodsID] = :goodsid
+`
+    return ctx.model.transaction(async function (t) {
+            const ires = await ctx.model.query(isql,  { transaction: t, replacements: { userid: ctx.state.user.data._id, desc: payload.desc, sheetid: payload.sheetid, goodsid: payload.goodsid }, type: ctx.model.QueryTypes.INSERT })
+            const dres = await ctx.model.query(dsql,  { transaction: t, replacements: { userid: ctx.state.user.data._id, desc: payload.desc, sheetid: payload.sheetid, goodsid: payload.goodsid }, type: ctx.model.QueryTypes.DELETE })
+            const res = [ires, dres] 
+            ctx.logger.debug('res - ' + res)
+        return  res 
+        }).then(function (result) {
+          // Transaction has been committed
+          // result is whatever the result of the promise chain returned to the transaction callback
+            ctx.helper.success({ctx, res: result})  
+        }).catch(function (err) {
+          // Transaction has been rolled back
+          // err is whatever rejected the promise chain returned to the transaction callback
+          throw err
+        });
+
+  }
+
   async sheetLog() {
     const { ctx } = this
     const payload = ctx.request.body || {}
