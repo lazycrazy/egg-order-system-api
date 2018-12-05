@@ -87,6 +87,7 @@ module.exports = app => {
   if(app.config.IsHQ) {
     router.get('/api/query/shopServerUrl/:shopid', app.jwt, controller.query.shopServerUrl)
     router.get('/api/query/shopServerInfo', app.jwt, controller.query.shopServerInfo)
+    router.post('/api/query/fsExport', app.jwt, controller.query.fsExport)
     router.post('/api/set/functionSettingImport', app.jwt, controller.set.functionSettingImport)
     router.post('/api/set/shopNeed3ReviewCount', controller.set.shopNeed3ReviewCount)
 

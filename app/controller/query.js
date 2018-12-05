@@ -54,6 +54,30 @@ u.username =(select name from ${this.config.DBConnect}..Login where LoginID = :u
     ctx.helper.success({ctx})
   }
 
+
+
+  async fsExport() {
+    const { ctx } = this
+    const uid = ctx.state.user.data._id
+    const {curshop} = ctx.request.body || {}
+     let sql = `
+SELECT   fs.FunctionId AS 审批功能号, fs.ShopId AS 店铺号, fs.GoodsId AS 商品ID, RTRIM(g.CustomNo) + ' - ' + g.Name AS 商品名, 
+                CAST(e.ID AS varchar) + ' - ' + e.Name AS 课, CAST(fs.DeptId AS varchar) + ' - ' + d.Name AS 小类, ISNULL(c.Cost, 0) 
+                AS 进价, ISNULL(mo.MinOrderQty, 0) AS 最小订货数, fs.ordermultiple AS 最大订货倍数, fs.OrderNum AS 最大订货数, 
+                fs.OrderAmt AS 最大订货金额, fs.DayUpperlimit AS 每日最大订货数, fs.DayUpperlimitAmt AS 每日最大订货金额
+FROM      ${this.config.DBOrderReview}.dbo.FunctionSetting AS fs INNER JOIN
+                ${this.config.DBStock}.dbo.Goods AS g ON fs.GoodsId = g.GoodsID INNER JOIN
+                ${this.config.DBStock}.dbo.Shop AS s ON fs.ShopId = s.ID LEFT OUTER JOIN
+                ${this.config.DBStock}.dbo.Dept AS d ON fs.DeptId = d.ID LEFT OUTER JOIN
+                ${this.config.DBStock}.dbo.SGroup AS e ON LEFT(fs.DeptId, 2) = e.ID LEFT OUTER JOIN
+                ${this.config.DBStock}.dbo.MinOrder as mo on s.id= mo.shopid and g.GoodsID = mo.goodsid LEFT OUTER JOIN
+                ${this.config.DBStock}.dbo.Cost as c on s.id = c.shopid and g.goodsid = c.goodsid and c.flag=0
+WHERE fs.ShopId = :curshop `
+    const res = await ctx.model.query(sql,  { replacements: { curshop }, raw: true, type: ctx.model.QueryTypes.SELECT })
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx, res})     
+  }
+
   async userInfo() {
     const { ctx } = this
     const uid = ctx.state.user.data._id
@@ -191,7 +215,8 @@ WHERE  ${cdi}  (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)`,  { repl
                                            ${this.config.DBStock}.dbo.SGroup AS k ON k.ID = LEFT(g.DeptID, 2) LEFT OUTER JOIN
                                            ${this.config.DBStock}.dbo.SGroup AS b ON b.ID = LEFT(g.DeptID, 1)
                            WHERE   (gs.Flag IN (0, 8)) AND (gs.ShopID = :shopid))
-    SELECT   type, id,customno  +' - '+ label label, pid, customno, goods_deptid
+    SELECT   type, id,customno  +' - '+ label label, pid, customno, goods_deptid,  CAST(type AS varchar) + CAST(id AS varchar) 
+                    AS uid
     FROM      (SELECT DISTINCT 1 AS type, b_id AS id, cast(b_id as varchar) customno, b_id goods_deptid, b_name AS label, NULL AS pid
                      FROM      goods
                      UNION
