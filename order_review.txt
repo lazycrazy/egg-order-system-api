@@ -1,91 +1,91 @@
-/*    ==�ű�����==
+/*    ==脚本参数==
 
-    Դ�������汾 : SQL Server 2016 (13.0.4001)
-    Դ���ݿ�����汾 : Microsoft SQL Server Express Edition
-    Դ���ݿ��������� : ������ SQL Server
+    源服务器版本 : SQL Server 2016 (13.0.4001)
+    源数据库引擎版本 : Microsoft SQL Server Express Edition
+    源数据库引擎类型 : 独立的 SQL Server
 
-    Ŀ��������汾 : SQL Server 2017
-    Ŀ�����ݿ�����汾 : Microsoft SQL Server Standard Edition
-    Ŀ�����ݿ��������� : ������ SQL Server
+    目标服务器版本 : SQL Server 2017
+    目标数据库引擎版本 : Microsoft SQL Server Standard Edition
+    目标数据库引擎类型 : 独立的 SQL Server
 */
 USE [master]
 GO
-/****** Object:  Database [order_review]    Script Date: 2018/8/12 12:06:13 ******/
-CREATE DATABASE [order_review]
+/****** Object:  Database [scOrderReview]    Script Date: 2018/8/30 9:42:33 ******/
+CREATE DATABASE [scOrderReview]
  CONTAINMENT = NONE
  ON  PRIMARY 
 ( NAME = N'order_review', FILENAME = N'C:\Program Files\Microsoft SQL Server\MSSQL13.SQLEXPRESS\MSSQL\DATA\order_review.mdf' , SIZE = 73728KB , MAXSIZE = UNLIMITED, FILEGROWTH = 65536KB )
  LOG ON 
 ( NAME = N'order_review_log', FILENAME = N'C:\Program Files\Microsoft SQL Server\MSSQL13.SQLEXPRESS\MSSQL\DATA\order_review_log.ldf' , SIZE = 139264KB , MAXSIZE = 2048GB , FILEGROWTH = 65536KB )
 GO
-ALTER DATABASE [order_review] SET COMPATIBILITY_LEVEL = 130
+ALTER DATABASE [scOrderReview] SET COMPATIBILITY_LEVEL = 130
 GO
 IF (1 = FULLTEXTSERVICEPROPERTY('IsFullTextInstalled'))
 begin
-EXEC [order_review].[dbo].[sp_fulltext_database] @action = 'enable'
+EXEC [scOrderReview].[dbo].[sp_fulltext_database] @action = 'enable'
 end
 GO
-ALTER DATABASE [order_review] SET ANSI_NULL_DEFAULT OFF 
+ALTER DATABASE [scOrderReview] SET ANSI_NULL_DEFAULT OFF 
 GO
-ALTER DATABASE [order_review] SET ANSI_NULLS OFF 
+ALTER DATABASE [scOrderReview] SET ANSI_NULLS OFF 
 GO
-ALTER DATABASE [order_review] SET ANSI_PADDING OFF 
+ALTER DATABASE [scOrderReview] SET ANSI_PADDING OFF 
 GO
-ALTER DATABASE [order_review] SET ANSI_WARNINGS OFF 
+ALTER DATABASE [scOrderReview] SET ANSI_WARNINGS OFF 
 GO
-ALTER DATABASE [order_review] SET ARITHABORT OFF 
+ALTER DATABASE [scOrderReview] SET ARITHABORT OFF 
 GO
-ALTER DATABASE [order_review] SET AUTO_CLOSE OFF 
+ALTER DATABASE [scOrderReview] SET AUTO_CLOSE OFF 
 GO
-ALTER DATABASE [order_review] SET AUTO_SHRINK OFF 
+ALTER DATABASE [scOrderReview] SET AUTO_SHRINK OFF 
 GO
-ALTER DATABASE [order_review] SET AUTO_UPDATE_STATISTICS ON 
+ALTER DATABASE [scOrderReview] SET AUTO_UPDATE_STATISTICS ON 
 GO
-ALTER DATABASE [order_review] SET CURSOR_CLOSE_ON_COMMIT OFF 
+ALTER DATABASE [scOrderReview] SET CURSOR_CLOSE_ON_COMMIT OFF 
 GO
-ALTER DATABASE [order_review] SET CURSOR_DEFAULT  GLOBAL 
+ALTER DATABASE [scOrderReview] SET CURSOR_DEFAULT  GLOBAL 
 GO
-ALTER DATABASE [order_review] SET CONCAT_NULL_YIELDS_NULL OFF 
+ALTER DATABASE [scOrderReview] SET CONCAT_NULL_YIELDS_NULL OFF 
 GO
-ALTER DATABASE [order_review] SET NUMERIC_ROUNDABORT OFF 
+ALTER DATABASE [scOrderReview] SET NUMERIC_ROUNDABORT OFF 
 GO
-ALTER DATABASE [order_review] SET QUOTED_IDENTIFIER OFF 
+ALTER DATABASE [scOrderReview] SET QUOTED_IDENTIFIER OFF 
 GO
-ALTER DATABASE [order_review] SET RECURSIVE_TRIGGERS OFF 
+ALTER DATABASE [scOrderReview] SET RECURSIVE_TRIGGERS OFF 
 GO
-ALTER DATABASE [order_review] SET  DISABLE_BROKER 
+ALTER DATABASE [scOrderReview] SET  DISABLE_BROKER 
 GO
-ALTER DATABASE [order_review] SET AUTO_UPDATE_STATISTICS_ASYNC OFF 
+ALTER DATABASE [scOrderReview] SET AUTO_UPDATE_STATISTICS_ASYNC OFF 
 GO
-ALTER DATABASE [order_review] SET DATE_CORRELATION_OPTIMIZATION OFF 
+ALTER DATABASE [scOrderReview] SET DATE_CORRELATION_OPTIMIZATION OFF 
 GO
-ALTER DATABASE [order_review] SET TRUSTWORTHY OFF 
+ALTER DATABASE [scOrderReview] SET TRUSTWORTHY OFF 
 GO
-ALTER DATABASE [order_review] SET ALLOW_SNAPSHOT_ISOLATION OFF 
+ALTER DATABASE [scOrderReview] SET ALLOW_SNAPSHOT_ISOLATION OFF 
 GO
-ALTER DATABASE [order_review] SET PARAMETERIZATION SIMPLE 
+ALTER DATABASE [scOrderReview] SET PARAMETERIZATION SIMPLE 
 GO
-ALTER DATABASE [order_review] SET READ_COMMITTED_SNAPSHOT OFF 
+ALTER DATABASE [scOrderReview] SET READ_COMMITTED_SNAPSHOT OFF 
 GO
-ALTER DATABASE [order_review] SET HONOR_BROKER_PRIORITY OFF 
+ALTER DATABASE [scOrderReview] SET HONOR_BROKER_PRIORITY OFF 
 GO
-ALTER DATABASE [order_review] SET RECOVERY SIMPLE 
+ALTER DATABASE [scOrderReview] SET RECOVERY SIMPLE 
 GO
-ALTER DATABASE [order_review] SET  MULTI_USER 
+ALTER DATABASE [scOrderReview] SET  MULTI_USER 
 GO
-ALTER DATABASE [order_review] SET PAGE_VERIFY CHECKSUM  
+ALTER DATABASE [scOrderReview] SET PAGE_VERIFY CHECKSUM  
 GO
-ALTER DATABASE [order_review] SET DB_CHAINING OFF 
+ALTER DATABASE [scOrderReview] SET DB_CHAINING OFF 
 GO
-ALTER DATABASE [order_review] SET FILESTREAM( NON_TRANSACTED_ACCESS = OFF ) 
+ALTER DATABASE [scOrderReview] SET FILESTREAM( NON_TRANSACTED_ACCESS = OFF ) 
 GO
-ALTER DATABASE [order_review] SET TARGET_RECOVERY_TIME = 60 SECONDS 
+ALTER DATABASE [scOrderReview] SET TARGET_RECOVERY_TIME = 60 SECONDS 
 GO
-ALTER DATABASE [order_review] SET DELAYED_DURABILITY = DISABLED 
+ALTER DATABASE [scOrderReview] SET DELAYED_DURABILITY = DISABLED 
 GO
-ALTER DATABASE [order_review] SET QUERY_STORE = OFF
+ALTER DATABASE [scOrderReview] SET QUERY_STORE = OFF
 GO
-USE [order_review]
+USE [scOrderReview]
 GO
 ALTER DATABASE SCOPED CONFIGURATION SET LEGACY_CARDINALITY_ESTIMATION = OFF;
 GO
@@ -103,39 +103,106 @@ ALTER DATABASE SCOPED CONFIGURATION SET QUERY_OPTIMIZER_HOTFIXES = OFF;
 GO
 ALTER DATABASE SCOPED CONFIGURATION FOR SECONDARY SET QUERY_OPTIMIZER_HOTFIXES = PRIMARY;
 GO
-USE [order_review]
+USE [scOrderReview]
 GO
-/****** Object:  UserDefinedFunction [dbo].[F_CheckPurchaseItem]    Script Date: 2018/8/12 12:06:13 ******/
+/****** Object:  UserDefinedFunction [dbo].[F_CheckPurchaseItem]    Script Date: 2018/8/30 9:42:33 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
---����,��Ʒid,������
-CREATE  FUNCTION [dbo].[F_CheckPurchaseItem](@sheetid char(16),@goodsid int,@userid int)
-returns nvarchar(256) --û������ķ���'',�����ⷵ��ԭ�� 
+--单号,商品id,操作人
+CREATE  FUNCTION [dbo].[F_CheckPurchaseItem](@sheetid char(16),@goodsid int,@auth int)
+returns nvarchar(256) --没有问题的返回'',有问题返回原因 
 AS
 BEGIN
 DECLARE @rs nvarchar(256)
 ,
 @shopid char(4),
-@qty decimal(12,3)
+@oqty decimal(12,3),
+@oename varchar,
+@oeshortname varchar,
+@odeptid int,
+@ocost decimal(12,4),
+@skutype char(1)='A' --怎么取这个值？
 SET @rs = ''
 SET @shopid = (select ShopID from mySHOPSHStock..PurchaseAsk0 where SheetID=@sheetid)
-SET @qty = (select Qty from mySHOPSHStock..[PurchaseAskItem0] where SheetID=@sheetid and @goodsid = [GoodsID])
-if(isnull(@qty,0) <=0) 
+select @oqty =pai.Qty,@oename =rtrim(g.ename),@oeshortname = rtrim(g.EShortName),@odeptid=g.DeptID,
+@ocost=pai.Cost
+ from mySHOPSHStock..[PurchaseAskItem0] pai join mySHOPSHStock..Goods g on pai.GoodsID = g.GoodsID where pai.SheetID=@sheetid and @goodsid = pai.GoodsID
+if(isnull(@oqty,0) <=0) 
   return @rs
- --����У��
- if ((select count(1) from [dbo].[OrderControl] where [TypeID]=1 and code=@shopid and [forbidden]=1)>0)   
-  set @rs = @rs + '�˵겻��������'+CHAR(13)+CHAR(10)
+
+--订货属性值判断
+ --1 店铺
+ if ((select count(1) from [dbo].[OrderControl] where [TypeID]=1 and shopid=@shopid and [forbidden]=1)>0)   
+  set @rs = @rs + '此店不允许订货'
 return @rs
-  if(1=1)
-  set @rs = @rs + '�д�2'+CHAR(13)+CHAR(10)
-  --�û�����Ȩ������ֵ  
+
+--2 毛利属性
+ if ((select count(1) from [dbo].[OrderControl] where [TypeID]=2 and shopid=@shopid and code = @oename and [forbidden]=1)>0)   
+  set @rs = @rs + '毛利属性 '+@oename+' 不允许订货'
+  return @rs
+  --3 销售属性
+ if ((select count(1) from [dbo].[OrderControl] where [TypeID]=3 and shopid=@shopid and code =@oeshortname and [forbidden]=1)>0)   
+  set @rs = @rs + '销售属性 '+@oeshortname+' 不允许订货'
+  return @rs
+  --4 品类店型组
+ if ((select count(1) from [dbo].[OrderControl] where [TypeID]=4 and shopid=@shopid and code = @odeptid and subcode = @skutype and [forbidden]=1)>0)   
+  set @rs = @rs +'品类店型组 '+@odeptid+'-'+@skutype+' 不允许订货'
+  return @rs
+
+
+
+  --用户审批权限属性值 判断
+declare 
+@multiple numeric(10,2),--倍数
+@num numeric(10,2),--数量
+@amt money,--金额
+@limitnum numeric(10,2),--每日数量上线
+@limitamt money,--每日金额上限
+@totalnum numeric(10,2),
+@totalamt money
+
+select 
+@multiple=isnull(fs.ordermultiple,0) ,--倍数*？
+@num=isnull(fs.[OrderNum],0),
+@amt=isnull(fs.[OrderAmt],0),  
+@limitnum=isnull(fs.[DayUpperlimit] ,0), 
+@limitamt=isnull(fs.[DayUpperlimitAmt],0) 
+ from [dbo].[FunctionSetting] fs where 
+fs.FunctionId =@auth  and fs.ShopId = @shopid 
+
+
+(select @totalnum=sum(Qty),@totalamt=sum(Qty*Cost) from  mySHOPSHStock..PurchaseAskItem where GoodsID = @goodsid )
+
+--倍数 与 数量比较
+if(@oqty > @num)
+  set @rs = @rs + '数量不能大于 xx 的多少倍' + convert(varchar,@multiple)
+return @rs
+
+--数量 与 数量比较
+if(@oqty > @num)
+  set @rs = @rs + '数量不能大于' + convert(varchar,@num)
+return @rs
+
+--金额比较
+if(@ocost > @amt)
+  set @rs = @rs + '金额不能大于' + convert(varchar,@amt)
+return @rs
+
+--单日最大数量比较
+if(@oqty+@totalnum> @limitnum  )
+  set @rs = @rs + '每日订货数不能大于' + convert(varchar,@limitnum)
+return @rs
+--单日最大金额比较
+if((@oqty*@ocost)+@totalamt > @limitamt  )
+  set @rs = @rs + '每日订货金额不能大于' + convert(varchar,@limitamt)
+return @rs
 
 RETURN   @rs   
 END
 GO
-/****** Object:  Table [dbo].[FunctionSetting]    Script Date: 2018/8/12 12:06:13 ******/
+/****** Object:  Table [dbo].[FunctionSetting]    Script Date: 2018/8/30 9:42:33 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -159,7 +226,7 @@ CREATE TABLE [dbo].[FunctionSetting](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Login]    Script Date: 2018/8/12 12:06:13 ******/
+/****** Object:  Table [dbo].[Login]    Script Date: 2018/8/30 9:42:33 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -183,25 +250,22 @@ UNIQUE NONCLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[OrderControl]    Script Date: 2018/8/12 12:06:13 ******/
+/****** Object:  Table [dbo].[OrderControl]    Script Date: 2018/8/30 9:42:33 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 CREATE TABLE [dbo].[OrderControl](
 	[TypeID] [int] NOT NULL,
-	[Code] [varchar](20) NOT NULL,
+	[ShopID] [varchar](10) NOT NULL,
+	[Code] [varchar](10) NOT NULL,
+	[SubCode] [varchar](10) NOT NULL,
 	[forbidden] [bit] NOT NULL,
 	[ruleRunDT] [smalldatetime] NULL,
-	[LastModifyDT] [smalldatetime] NOT NULL,
- CONSTRAINT [PK_OrderControl] PRIMARY KEY CLUSTERED 
-(
-	[TypeID] ASC,
-	[Code] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+	[LastModifyDT] [smalldatetime] NOT NULL
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[OrgRoleVSFunction]    Script Date: 2018/8/12 12:06:13 ******/
+/****** Object:  Table [dbo].[OrgRoleVSFunction]    Script Date: 2018/8/30 9:42:33 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -216,7 +280,7 @@ CREATE TABLE [dbo].[OrgRoleVSFunction](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[PurchaseControlItemLogs]    Script Date: 2018/8/12 12:06:13 ******/
+/****** Object:  Table [dbo].[PurchaseControlItemLogs]    Script Date: 2018/8/30 9:42:33 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -265,13 +329,243 @@ ALTER TABLE [dbo].[FunctionSetting] ADD  CONSTRAINT [DF__FunctionS__LastM__02FC7
 GO
 ALTER TABLE [dbo].[Login] ADD  DEFAULT ((1)) FOR [EnableFlag]
 GO
-ALTER TABLE [dbo].[OrderControl] ADD  DEFAULT ((1)) FOR [forbidden]
-GO
-ALTER TABLE [dbo].[OrderControl] ADD  DEFAULT (getdate()) FOR [LastModifyDT]
-GO
 ALTER TABLE [dbo].[PurchaseControlItemLogs] ADD  DEFAULT (getdate()) FOR [LogTime]
+GO
+
+CREATE TABLE [dbo].[PurchaseAskItem0_Bak](
+	[SheetID] [char](16) NOT NULL,
+	 
+	[GoodsID] [int] NOT NULL,
+	 
+	[Qty] [decimal](12, 3) NOT NULL,
+	 
+	BakTime [datetime] DEFAULT (getdate()) NULL, 
+PRIMARY KEY CLUSTERED 
+(
+	[SheetID] ASC,
+	[GoodsID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO 
+
+
+USE [master]
+GO
+ALTER DATABASE [scOrderReview] SET  READ_WRITE 
+GO
+
+
+
+
+
+
+/*    ==脚本参数==
+
+    源服务器版本 : SQL Server 2016 (13.0.4001)
+    源数据库引擎版本 : Microsoft SQL Server Express Edition
+    源数据库引擎类型 : 独立的 SQL Server
+
+    目标服务器版本 : SQL Server 2017
+    目标数据库引擎版本 : Microsoft SQL Server Standard Edition
+    目标数据库引擎类型 : 独立的 SQL Server
+*/
+USE [master]
+GO
+/****** Object:  Database [hqOrderReview]    Script Date: 2018/8/30 9:40:30 ******/
+CREATE DATABASE [hqOrderReview]
+ CONTAINMENT = NONE
+ ON  PRIMARY 
+( NAME = N'hqOrderReview', FILENAME = N'C:\Program Files\Microsoft SQL Server\MSSQL13.SQLEXPRESS\MSSQL\DATA\hqOrderReview.mdf' , SIZE = 204800KB , MAXSIZE = UNLIMITED, FILEGROWTH = 65536KB )
+ LOG ON 
+( NAME = N'hqOrderReview_log', FILENAME = N'C:\Program Files\Microsoft SQL Server\MSSQL13.SQLEXPRESS\MSSQL\DATA\hqOrderReview_log.ldf' , SIZE = 8192KB , MAXSIZE = 2048GB , FILEGROWTH = 65536KB )
+GO
+ALTER DATABASE [hqOrderReview] SET COMPATIBILITY_LEVEL = 130
+GO
+IF (1 = FULLTEXTSERVICEPROPERTY('IsFullTextInstalled'))
+begin
+EXEC [hqOrderReview].[dbo].[sp_fulltext_database] @action = 'enable'
+end
+GO
+ALTER DATABASE [hqOrderReview] SET ANSI_NULL_DEFAULT OFF 
+GO
+ALTER DATABASE [hqOrderReview] SET ANSI_NULLS OFF 
+GO
+ALTER DATABASE [hqOrderReview] SET ANSI_PADDING OFF 
+GO
+ALTER DATABASE [hqOrderReview] SET ANSI_WARNINGS OFF 
+GO
+ALTER DATABASE [hqOrderReview] SET ARITHABORT OFF 
+GO
+ALTER DATABASE [hqOrderReview] SET AUTO_CLOSE OFF 
+GO
+ALTER DATABASE [hqOrderReview] SET AUTO_SHRINK OFF 
+GO
+ALTER DATABASE [hqOrderReview] SET AUTO_UPDATE_STATISTICS ON 
+GO
+ALTER DATABASE [hqOrderReview] SET CURSOR_CLOSE_ON_COMMIT OFF 
+GO
+ALTER DATABASE [hqOrderReview] SET CURSOR_DEFAULT  GLOBAL 
+GO
+ALTER DATABASE [hqOrderReview] SET CONCAT_NULL_YIELDS_NULL OFF 
+GO
+ALTER DATABASE [hqOrderReview] SET NUMERIC_ROUNDABORT OFF 
+GO
+ALTER DATABASE [hqOrderReview] SET QUOTED_IDENTIFIER OFF 
+GO
+ALTER DATABASE [hqOrderReview] SET RECURSIVE_TRIGGERS OFF 
+GO
+ALTER DATABASE [hqOrderReview] SET  DISABLE_BROKER 
+GO
+ALTER DATABASE [hqOrderReview] SET AUTO_UPDATE_STATISTICS_ASYNC OFF 
+GO
+ALTER DATABASE [hqOrderReview] SET DATE_CORRELATION_OPTIMIZATION OFF 
+GO
+ALTER DATABASE [hqOrderReview] SET TRUSTWORTHY OFF 
+GO
+ALTER DATABASE [hqOrderReview] SET ALLOW_SNAPSHOT_ISOLATION OFF 
+GO
+ALTER DATABASE [hqOrderReview] SET PARAMETERIZATION SIMPLE 
+GO
+ALTER DATABASE [hqOrderReview] SET READ_COMMITTED_SNAPSHOT OFF 
+GO
+ALTER DATABASE [hqOrderReview] SET HONOR_BROKER_PRIORITY OFF 
+GO
+ALTER DATABASE [hqOrderReview] SET RECOVERY SIMPLE 
+GO
+ALTER DATABASE [hqOrderReview] SET  MULTI_USER 
+GO
+ALTER DATABASE [hqOrderReview] SET PAGE_VERIFY CHECKSUM  
+GO
+ALTER DATABASE [hqOrderReview] SET DB_CHAINING OFF 
+GO
+ALTER DATABASE [hqOrderReview] SET FILESTREAM( NON_TRANSACTED_ACCESS = OFF ) 
+GO
+ALTER DATABASE [hqOrderReview] SET TARGET_RECOVERY_TIME = 60 SECONDS 
+GO
+ALTER DATABASE [hqOrderReview] SET DELAYED_DURABILITY = DISABLED 
+GO
+ALTER DATABASE [hqOrderReview] SET QUERY_STORE = OFF
+GO
+USE [hqOrderReview]
+GO
+ALTER DATABASE SCOPED CONFIGURATION SET LEGACY_CARDINALITY_ESTIMATION = OFF;
+GO
+ALTER DATABASE SCOPED CONFIGURATION FOR SECONDARY SET LEGACY_CARDINALITY_ESTIMATION = PRIMARY;
+GO
+ALTER DATABASE SCOPED CONFIGURATION SET MAXDOP = 0;
+GO
+ALTER DATABASE SCOPED CONFIGURATION FOR SECONDARY SET MAXDOP = PRIMARY;
+GO
+ALTER DATABASE SCOPED CONFIGURATION SET PARAMETER_SNIFFING = ON;
+GO
+ALTER DATABASE SCOPED CONFIGURATION FOR SECONDARY SET PARAMETER_SNIFFING = PRIMARY;
+GO
+ALTER DATABASE SCOPED CONFIGURATION SET QUERY_OPTIMIZER_HOTFIXES = OFF;
+GO
+ALTER DATABASE SCOPED CONFIGURATION FOR SECONDARY SET QUERY_OPTIMIZER_HOTFIXES = PRIMARY;
+GO
+USE [hqOrderReview]
+GO
+/****** Object:  Table [dbo].[FunctionSetting]    Script Date: 2018/8/30 9:40:30 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[FunctionSetting](
+	[FunctionId] [int] NOT NULL,
+	[ShopId] [varchar](10) NOT NULL,
+	[GoodsId] [int] NOT NULL,
+	[DeptId] [int] NOT NULL,
+	[ordermultiple] [numeric](10, 2) NULL,
+	[OrderNum] [numeric](10, 2) NULL,
+	[OrderAmt] [money] NULL,
+	[DayUpperlimit] [numeric](10, 2) NOT NULL,
+	[DayUpperlimitAmt] [money] NOT NULL,
+	[LastModifyDT] [smalldatetime] NOT NULL
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[FunctionSettingImport]    Script Date: 2018/8/30 9:40:30 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[FunctionSettingImport](
+	[Col1] [varchar](10) NOT NULL,
+	[Col2] [varchar](10) NOT NULL,
+	[Col3] [varchar](10) NOT NULL,
+	[Col4] [varchar](10) NULL,
+	[Col5] [varchar](10) NULL,
+	[Col6] [varchar](10) NULL,
+	[Col7] [varchar](10) NULL,
+	[Col8] [varchar](10) NULL
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Login]    Script Date: 2018/8/30 9:40:30 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Login](
+	[LoginID] [smallint] NOT NULL,
+	[Name] [varchar](16) NOT NULL,
+	[CName] [nvarchar](8) NOT NULL,
+	[password] [varchar](20) NOT NULL,
+	[EnableFlag] [bit] NOT NULL,
+	[Note] [nvarchar](50) NULL,
+	[LastModifyDT] [datetime] NULL,
+	[IsAdmin] [bit] NULL,
+ CONSTRAINT [PK_Login] PRIMARY KEY CLUSTERED 
+(
+	[LoginID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[OrderControl]    Script Date: 2018/8/30 9:40:30 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[OrderControl](
+	[TypeID] [int] NOT NULL,
+	[ShopID] [varchar](10) NOT NULL,
+	[Code] [varchar](10) NOT NULL,
+	[SubCode] [varchar](10) NOT NULL,
+	[forbidden] [bit] NOT NULL,
+	[ruleRunDT] [smalldatetime] NULL,
+	[LastModifyDT] [smalldatetime] NOT NULL,
+ CONSTRAINT [PK_OrderControl] PRIMARY KEY CLUSTERED 
+(
+	[TypeID] ASC,
+	[ShopID] ASC,
+	[Code] ASC,
+	[SubCode] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[OrgRoleVSFunction]    Script Date: 2018/8/30 9:40:30 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[OrgRoleVSFunction](
+	[OrgRoleID] [int] NOT NULL,
+	[FunctionId] [int] NOT NULL
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[ShopServerInfo]    Script Date: 2018/8/30 9:40:30 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[ShopServerInfo](
+	[ShopId] [varchar](10) NOT NULL,
+	[ServerUrl] [varchar](200) NOT NULL,
+	[Need3ReviewCount] [int] NOT NULL
+) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[ShopServerInfo] ADD  CONSTRAINT [DF_ShopSeverInfo_Need3ReviewCount]  DEFAULT ((0)) FOR [Need3ReviewCount]
 GO
 USE [master]
 GO
-ALTER DATABASE [order_review] SET  READ_WRITE 
+ALTER DATABASE [hqOrderReview] SET  READ_WRITE 
 GO

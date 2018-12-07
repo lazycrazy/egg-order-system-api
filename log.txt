@@ -217,6 +217,79 @@ GO
 
 exec SyncMaster
 
+ --insert into PurchaseAskItem0_Bak(sheetid,goodsid,qty) select sheetid,goodsid,qty  from myshopshstock..PurchaseAskItem0
+
+
+create PROCEDURE [dbo].[RollbackReview]
+AS
+BEGIN
+  --删除没用的备份
+DELETE bak
+FROM      PurchaseAskItem0_Bak AS bak 
+WHERE  not EXISTS
+                    (SELECT   1 
+                     FROM      mySHOPSHStock.dbo.PurchaseAsk0 AS i
+                     WHERE   (bak.SheetID = i.SheetID));
+
+/*
+--比较差异
+with aa as(
+(SELECT   SheetID, GoodsID, Qty
+FROM      mySHOPSHStock.dbo.PurchaseAskItem0 AS i
+WHERE   (SheetID = 'B096201804160111') 
+AND EXISTS
+ (SELECT   1 
+    FROM      PurchaseAskItem0_Bak AS bak
+  WHERE   (bak.SheetID = i.SheetID ))
+    EXCEPT
+SELECT   SheetID, GoodsID, Qty
+FROM      .dbo.PurchaseAskItem0_Bak
+WHERE   SheetID = 'B096201804160111')
+UNION ALL
+(SELECT   SheetID, GoodsID, Qty
+FROM      PurchaseAskItem0_Bak
+WHERE   SheetID = 'B096201804160111'
+    EXCEPT
+SELECT   SheetID, GoodsID, Qty
+FROM      mySHOPSHStock.dbo.PurchaseAskItem0
+WHERE   SheetID = 'B096201804160111'))
+select count(1) num from aa;
+*/
+
+
+ 
+--取消发生变更了的单据的一审下一级审批，二审下一级审批标记，重新审批
+with aa as(
+(SELECT   SheetID, GoodsID, Qty
+FROM      mySHOPSHStock.dbo.PurchaseAskItem0 AS i
+WHERE   EXISTS
+ (SELECT   1 
+    FROM      PurchaseAskItem0_Bak AS bak
+  WHERE   (bak.SheetID = i.SheetID ))
+    EXCEPT
+SELECT   SheetID, GoodsID, Qty
+FROM      .dbo.PurchaseAskItem0_Bak )--原表已备份的数据，不在备份表的记录
+UNION ALL
+(SELECT   SheetID, GoodsID, Qty
+FROM      PurchaseAskItem0_Bak as bak
+WHERE   EXISTS
+ (SELECT   1 
+    FROM      mySHOPSHStock.dbo.PurchaseAsk0 AS i
+  WHERE   (bak.SheetID = i.SheetID ))
+    EXCEPT
+SELECT   SheetID, GoodsID, Qty
+FROM      mySHOPSHStock.dbo.PurchaseAskItem0 )--备份表主表还有数据，不在原表的记录
+), bb as (select distinct sheetid from aa)
+update l set [serialid]=[serialid]-100  ,LogDesc=LogDesc+'-> 被修改，重新审批'  from  [dbo].[PurchaseControlItemLogs] as l 
+ where   exists (select 1 from bb where bb.sheetid = l.sheetid ) and [serialid] in (-11,-12)
+
+
+END
+
+
+
+  
+
 --总部店铺
  select * from mySHOPSHStock..Shop  where ShopType in (11,13) and Enable =1
  --店铺店铺

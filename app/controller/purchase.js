@@ -228,7 +228,9 @@ INSERT INTO ${this.config.DBOrderReview}.[dbo].[PurchaseControlItemLogs]
   async sheetLog() {
     const { ctx } = this
     const payload = ctx.request.body || {}
-    const res = await ctx.model.query(`INSERT INTO ${this.config.DBOrderReview}.[dbo].[PurchaseControlItemLogs]
+    const res = await ctx.model.query(`
+begin
+      INSERT INTO ${this.config.DBOrderReview}.[dbo].[PurchaseControlItemLogs]
            ([LogTime]
            ,[LogUserID]
            ,[LogDesc]
@@ -236,11 +238,22 @@ INSERT INTO ${this.config.DBOrderReview}.[dbo].[PurchaseControlItemLogs]
            ,[serialid])
      VALUES
            (getdate(),:userid,:desc,:sheetid,:auth)
+ if(-11=:auth)
+   begin 
+     delete from  ${this.config.DBOrderReview}.[dbo].PurchaseAskItem0_Bak where sheetid = :sheetid
+     insert into ${this.config.DBOrderReview}.[dbo].PurchaseAskItem0_Bak(sheetid,goodsid,qty) 
+       select sheetid,goodsid,qty  from ${this.config.DBStock}.dbo.PurchaseAskItem0
+       where
+       sheetid = :sheetid
+   end
+end
 `,  { replacements: { userid: ctx.state.user.data._id, 
     desc: payload.desc, 
     sheetid: payload.sheetid, 
     auth: payload.auth 
   }, type: ctx.model.QueryTypes.INSERT })
+
+
     ctx.logger.debug(res)
     ctx.helper.success({ ctx, res })
   }
@@ -340,7 +353,36 @@ WHERE   (SheetID IN (:sheetids)) order by LogTime
  
   async review() {
     const { ctx } = this
-    const { sheetid } = ctx.request.body
+    const { sheetid, auth } = ctx.request.body
+    if(auth > 1){
+          const rs = await ctx.model.query(`
+              with aa as(
+      (SELECT   SheetID, GoodsID, Qty
+      FROM      ${this.config.DBStock}.dbo.PurchaseAskItem0 AS i
+      WHERE   (SheetID = :sheetid) 
+      AND EXISTS
+       (SELECT   1 
+          FROM      ${this.config.DBOrderReview}.dbo.PurchaseAskItem0_Bak AS bak
+        WHERE   (bak.SheetID = i.SheetID ))
+          EXCEPT
+      SELECT   SheetID, GoodsID, Qty
+      FROM      ${this.config.DBOrderReview}.dbo.PurchaseAskItem0_Bak
+      WHERE   SheetID = :sheetid)
+      UNION ALL
+      (SELECT   SheetID, GoodsID, Qty
+      FROM      ${this.config.DBOrderReview}.dbo.PurchaseAskItem0_Bak
+      WHERE   SheetID = :sheetid
+          EXCEPT
+      SELECT   SheetID, GoodsID, Qty
+      FROM      ${this.config.DBStock}.dbo.PurchaseAskItem0
+      WHERE   SheetID = :sheetid))
+      select count(1) num from aa
+      `,  { replacements: { sheetid}, type: ctx.model.QueryTypes.SELECT })
+          if(rs[0].num > 0 ){
+            throw new Error('单据已变动，需要重新一审')
+          }
+    }
+
     const userid = ctx.state.user.data._id
     const fs = await ctx.model.query(`DECLARE @return_value int
 EXEC  @return_value = [${this.config.DBStock}].[dbo].[ST_PurchaseAsk]
