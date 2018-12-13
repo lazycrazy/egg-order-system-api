@@ -5,6 +5,60 @@ class PurchaseQueryController extends Controller {
     super(ctx)
   } 
 
+  async qtyExport() {
+    const { ctx } = this
+    const payload = ctx.request.body 
+    let cdi1 = ''
+    let cdi2 = ''
+    if(payload.sheetid && payload.sheetid.length > 0) {
+        cdi1 += ` and pcil.sheetid=:sheetid ` 
+        cdi2 += ` and pa.sheetid=:sheetid ` 
+    }
+    if(payload.barcodeid && payload.barcodeid.length > 0) {
+        cdi1 += ` and pcil.barcodeid=:barcodeid ` 
+        cdi2 += ` and pai.barcodeid=:barcodeid ` 
+    }
+     if(payload.shopid && payload.shopid.length > 0) { 
+        cdi2 += ` and pa.shopid=:shopid ` 
+    }
+    //查询0表
+    const res = await ctx.model.query(`
+WITH originrow AS (SELECT   SheetID, GoodsID, MIN(LogTime) AS logtime
+                                FROM     ${this.config.DBOrderReview}.dbo.PurchaseControlItemLogs AS pcil
+                                WHERE   (GoodsID IS NOT NULL) AND (LogTime >= :dates) AND (LogTime <= DATEADD(day,1,:datee)) 
+               ${cdi1} 
+                                GROUP BY SheetID, GoodsID), originqty AS
+    (SELECT   pcil.SheetID, pcil.GoodsID, SUM(pcil.Qty) AS oqty
+     FROM      ${this.config.DBOrderReview}.dbo.PurchaseControlItemLogs AS pcil INNER JOIN
+                     originrow ON pcil.SheetID = originrow.SheetID AND pcil.GoodsID = originrow.GoodsID AND 
+                     pcil.LogTime = originrow.logtime
+     GROUP BY pcil.SheetID, pcil.GoodsID), rs AS
+    (SELECT   pa.ShopID AS shopid, CONVERT(VARCHAR(10), pa.CheckDate, 111) AS editdate, pai.GoodsID AS goodsid, 
+                     SUM(ISNULL(originqty.oqty, pai.Qty)) AS oqty, SUM(pai.Qty) AS qty
+     FROM      ${this.config.DBStock}.dbo.PurchaseAsk AS pa INNER JOIN
+                     ${this.config.DBStock}.dbo.PurchaseAskItem AS pai ON pa.SheetID = pai.SheetID LEFT OUTER JOIN
+                     originqty ON pai.SheetID = originqty.SheetID AND pai.GoodsID = originqty.GoodsID
+           where (pa.CheckDate >= :dates) AND (pa.CheckDate <= DATEADD(day,1,:datee))
+           ${cdi2} 
+     GROUP BY pa.ShopID, CONVERT(VARCHAR(10), pa.CheckDate, 111), pai.GoodsID),rsp as
+   (SELECT  ROW_NUMBER() OVER ( ORDER BY rs.shopid, rs.editdate, rs.goodsid ) AS RowNum, rs.shopid 店铺ID, rs.editdate 审核日期, rs.goodsid 商品ID, rs.oqty 申请订货数, rs.qty 批准订货数, g.CustomNo AS 商品码, g.Name AS 商品名, 
+                    g.BarcodeID AS 商品条码, isnull(mo.MinOrderQty,0) AS 最小订货数, s.Name AS 店铺名,d.ID 小类ID,d.Name 小类名,sg.ID 课ID,sg.Name 课名
+    FROM      rs LEFT OUTER JOIN
+                    ${this.config.DBStock}.dbo.Goods AS g ON g.GoodsID = rs.goodsid LEFT OUTER JOIN
+                    ${this.config.DBStock}.dbo.MinOrder AS mo ON mo.GoodsID = rs.goodsid AND mo.ShopID = rs.shopid LEFT OUTER JOIN
+                    ${this.config.DBStock}.dbo.Shop AS s ON rs.shopid = s.ID LEFT OUTER JOIN  
+                    ${this.config.DBStock}.dbo.Dept d on d.ID = g.DeptID LEFT OUTER JOIN  
+                    ${this.config.DBStock}.dbo.SGroup sg on sg.ID = left(g.DeptID,2))
+          select * from rsp 
+ORDER BY RowNum
+`,  { replacements: { shopid: payload.shopid, sheetid: payload.sheetid, barcodeid: payload.barcodeid, dates: payload.dates, datee: payload.datee}, type: ctx.model.QueryTypes.SELECT })
+     
+
+    // ctx.logger.debug('res'+JSON.stringify(res))
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx, res})
+  }
+
   async originqty() {
     const { ctx } = this
     const payload = ctx.request.body 

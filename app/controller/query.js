@@ -61,8 +61,8 @@ u.username =(select name from ${this.config.DBConnect}..Login where LoginID = :u
     const uid = ctx.state.user.data._id
     const {curshop} = ctx.request.body || {}
      let sql = `
-SELECT   fs.FunctionId AS 审批功能号, fs.ShopId AS 店铺号, fs.GoodsId AS 商品ID, RTRIM(g.CustomNo) + ' - ' + g.Name AS 商品名, 
-                CAST(e.ID AS varchar) + ' - ' + e.Name AS 课, CAST(fs.DeptId AS varchar) + ' - ' + d.Name AS 小类, ISNULL(c.Cost, 0) 
+SELECT   fs.FunctionId AS 审批功能号, fs.ShopId AS 店铺号, fs.GoodsId AS 商品ID, RTRIM(g.CustomNo) as 商品码, g.Name AS 商品名, 
+                CAST(e.ID AS varchar) as 课ID, e.Name AS 课名, CAST(fs.DeptId AS varchar) as 小类ID, d.Name AS 小类名, ISNULL(c.Cost, 0) 
                 AS 进价, ISNULL(mo.MinOrderQty, 0) AS 最小订货数, fs.ordermultiple AS 最大订货倍数, fs.OrderNum AS 最大促销订货倍数, 
                 fs.OrderAmt AS 最大订货金额, fs.DayUpperlimit AS 每日最大订货数, fs.DayUpperlimitAmt AS 每日最大订货金额
 FROM      ${this.config.DBOrderReview}.dbo.FunctionSetting AS fs INNER JOIN

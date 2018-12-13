@@ -68,6 +68,7 @@ module.exports = app => {
   // router.resources('upload', '/api/upload', controller.upload)
   if(app.config.IsSC) {
     router.post('/api/purchaseQuery/originqty', app.jwt, controller.purchaseQuery.originqty)
+    router.post('/api/query/qtyExport', app.jwt, controller.purchaseQuery.qtyExport)
     router.post('/api/purchaseQuery/listByShop', app.jwt, controller.purchaseQuery.listByShop)
     router.post('/api/purchaseQuery/itemBySheetIds', app.jwt, controller.purchaseQuery.itemBySheetIds)
     router.post('/api/purchase/listByShop', app.jwt, controller.purchase.listByShop)

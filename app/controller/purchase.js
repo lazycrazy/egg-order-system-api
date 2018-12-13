@@ -94,31 +94,42 @@ INSERT INTO ${this.config.DBOrderReview}.[dbo].[PurchaseControlItemLogs]
            ,[LastTotalSaleQty] from
            ${this.config.DBStock}..PurchaseAskItem0 i
            where
-           SheetID=:sheetid and GoodsID = :goodsid
+           SheetID=:sheetid and GoodsID = :goodsid;
 `
     const usql = `UPDATE ${this.config.DBStock}.[dbo].[PurchaseAskItem0]
    SET [Qty] = :qty 
    WHERE  
       [SheetID] = :sheetid
       and 
-      [GoodsID] = :goodsid
+      [GoodsID] = :goodsid;
+      UPDATE ${this.config.DBStock}.[dbo].[PurchaseAskItem0_Bak]
+   SET [Qty] = :qty 
+   WHERE  
+      [SheetID] = :sheetid
+      and 
+      [GoodsID] = :goodsid;
 `
-    return ctx.model.transaction(async function (t) {
-            const ires = await ctx.model.query(isql,  { transaction: t, replacements: { userid: ctx.state.user.data._id, desc: payload.desc, sheetid: payload.sheetid, goodsid: payload.goodsid }, type: ctx.model.QueryTypes.INSERT })
-            const ures = await ctx.model.query(usql,  { transaction: t, replacements: { userid: ctx.state.user.data._id, desc: payload.desc, sheetid: payload.sheetid, goodsid: payload.goodsid, qty: payload.qty }, type: ctx.model.QueryTypes.UPDATE })
-            const res = [ires, ures] 
-            ctx.logger.debug('res - ' + res)
-        return  res 
-        }).then(function (result) {
-          // Transaction has been committed
-          // result is whatever the result of the promise chain returned to the transaction callback
-            ctx.helper.success({ctx, res: result})  
-        }).catch(function (err) {
-          // Transaction has been rolled back
-          // err is whatever rejected the promise chain returned to the transaction callback
-          throw err
-        });
-
+    const sql = `begin 
+                ${isql}
+                ${usql}
+                 end`
+    const res = await ctx.model.query(sql,  { replacements: { userid: ctx.state.user.data._id, desc: payload.desc, sheetid: payload.sheetid, goodsid: payload.goodsid, qty: payload.qty }, type: ctx.model.QueryTypes.UPDATE })
+    ctx.helper.success({ ctx, res })
+    // return ctx.model.transaction(async function (t) {
+    //         const ires = await ctx.model.query(isql,  { transaction: t, replacements: { userid: ctx.state.user.data._id, desc: payload.desc, sheetid: payload.sheetid, goodsid: payload.goodsid }, type: ctx.model.QueryTypes.INSERT })
+    //         const ures = await ctx.model.query(usql,  { transaction: t, replacements: { userid: ctx.state.user.data._id, desc: payload.desc, sheetid: payload.sheetid, goodsid: payload.goodsid, qty: payload.qty }, type: ctx.model.QueryTypes.UPDATE })
+    //         const res = [ires, ures] 
+    //         ctx.logger.debug('res - ' + res)
+    //     return  res 
+    //     }).then(function (result) {
+    //       // Transaction has been committed
+    //       // result is whatever the result of the promise chain returned to the transaction callback
+    //         ctx.helper.success({ctx, res: result})  
+    //     }).catch(function (err) {
+    //       // Transaction has been rolled back
+    //       // err is whatever rejected the promise chain returned to the transaction callback
+    //       throw err
+    //     });
   }
 
   async deleteItemAndLog() {
@@ -199,29 +210,41 @@ INSERT INTO ${this.config.DBOrderReview}.[dbo].[PurchaseControlItemLogs]
            ,[LastTotalSaleQty] from
            ${this.config.DBStock}..PurchaseAskItem0 i
            where
-           SheetID=:sheetid and GoodsID = :goodsid
+           SheetID=:sheetid and GoodsID = :goodsid;
 `
     const dsql = `delete from ${this.config.DBStock}.[dbo].[PurchaseAskItem0]
    WHERE  
       [SheetID] = :sheetid
       and 
-      [GoodsID] = :goodsid
+      [GoodsID] = :goodsid;
+      delete from ${this.config.DBStock}.[dbo].[PurchaseAskItem0_Bak]
+   WHERE  
+      [SheetID] = :sheetid
+      and 
+      [GoodsID] = :goodsid;
 `
-    return ctx.model.transaction(async function (t) {
-            const ires = await ctx.model.query(isql,  { transaction: t, replacements: { userid: ctx.state.user.data._id, desc: payload.desc, sheetid: payload.sheetid, goodsid: payload.goodsid }, type: ctx.model.QueryTypes.INSERT })
-            const dres = await ctx.model.query(dsql,  { transaction: t, replacements: { userid: ctx.state.user.data._id, desc: payload.desc, sheetid: payload.sheetid, goodsid: payload.goodsid }, type: ctx.model.QueryTypes.DELETE })
-            const res = [ires, dres] 
-            ctx.logger.debug('res - ' + res)
-        return  res 
-        }).then(function (result) {
-          // Transaction has been committed
-          // result is whatever the result of the promise chain returned to the transaction callback
-            ctx.helper.success({ctx, res: result})  
-        }).catch(function (err) {
-          // Transaction has been rolled back
-          // err is whatever rejected the promise chain returned to the transaction callback
-          throw err
-        });
+    const sql = `begin
+        ${isql}
+        ${dsql}
+        end`
+
+    const res = await ctx.model.query(sql,  { replacements: { userid: ctx.state.user.data._id, desc: payload.desc, sheetid: payload.sheetid, goodsid: payload.goodsid }, type: ctx.model.QueryTypes.DELETE })
+    ctx.helper.success({ ctx, res })
+    // return ctx.model.transaction(async function (t) {
+    //         const ires = await ctx.model.query(isql,  { transaction: t, replacements: { userid: ctx.state.user.data._id, desc: payload.desc, sheetid: payload.sheetid, goodsid: payload.goodsid }, type: ctx.model.QueryTypes.INSERT })
+    //         const dres = await ctx.model.query(dsql,  { transaction: t, replacements: { userid: ctx.state.user.data._id, desc: payload.desc, sheetid: payload.sheetid, goodsid: payload.goodsid }, type: ctx.model.QueryTypes.DELETE })
+    //         const res = [ires, dres] 
+    //         ctx.logger.debug('res - ' + res)
+    //     return  res 
+    //     }).then(function (result) {
+    //       // Transaction has been committed
+    //       // result is whatever the result of the promise chain returned to the transaction callback
+    //         ctx.helper.success({ctx, res: result})  
+    //     }).catch(function (err) {
+    //       // Transaction has been rolled back
+    //       // err is whatever rejected the promise chain returned to the transaction callback
+    //       throw err
+    //     });
 
   }
 
