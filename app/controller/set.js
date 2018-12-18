@@ -178,9 +178,9 @@ FROM      ${this.config.DBOrderReview}..FunctionSetting AS fs CROSS JOIN
                     (SELECT   ID
                      FROM      ${this.config.DBStock}.dbo.Shop
                      WHERE   (ID IN (:shops))) AS s
-WHERE   (fs.ShopId = :curshop)`
+WHERE   (fs.ShopId = :curshop) and left(DeptId,2) in (:kids)`
     const dsql = `delete from ${this.config.DBOrderReview}.dbo.FunctionSetting
- WHERE ShopId in (:shops)`
+ WHERE ShopId in (:shops) and left(DeptId,2) in (:kids)`
     return ctx.model.transaction(async function (t) {
       const resd = await ctx.model.query(dsql, { transaction: t, replacements: obj, type:ctx.model.QueryTypes.DELETE})
       const resi = await ctx.model.query(isql, { transaction: t, replacements: obj, type:ctx.model.QueryTypes.INSERT})

@@ -300,12 +300,26 @@ ORDER BY roleid`, { type: ctx.model.QueryTypes.SELECT})
     ctx.helper.success({ctx, res})
   }
 
-
+  async shopsSkuType(){
+    const { ctx } = this
+    const sps = ctx.request.body.shops 
+    const sql = `WITH abc AS (SELECT DISTINCT Shopid, LEFT(Deptid, 2) AS kid, SkuType
+                       FROM ${this.config.DBStock}.dbo.hy_deptsku)
+    SELECT   a.Shopid AS shopid, b.Name AS shopname, c.ID AS kid, c.Name AS kname, a.SkuType AS skutype,convert(varchar,c.ID)+'-'+a.SkuType kid_skutype
+    FROM      abc AS a INNER JOIN
+              ${this.config.DBStock}.dbo.Shop AS b ON a.Shopid = b.ID INNER JOIN
+              ${this.config.DBStock}.dbo.SGroup AS c ON a.kid = c.ID
+    WHERE   (b.Enable = 1) AND (b.ID in (:sps))
+    ORDER BY shopid, kid, skutype`
+    const res = await ctx.model.query(sql, { replacements:{ sps }, type: ctx.model.QueryTypes.SELECT})  
+    // 设置响应内容和响应状态码
+    ctx.helper.success({ctx, res})
+  }
 
   async orderProperty() {
     const { ctx } = this
     const sps = ctx.request.body.shops || []
-    console.log(JSON.stringify(sps))
+    // console.log(JSON.stringify(sps))
     const shops = await ctx.model.query(`SELECT CONVERT(bit,(CASE WHEN b.forbidden IS NULL THEN 1 ELSE 0 END)) AS isnew, 1 type, a.ID shopid, RTRIM(a.Name) AS shopname, CONVERT(bit, ISNULL(b.forbidden, 0)) AS forbidden
 FROM      ${this.config.DBStock}.dbo.Shop AS a LEFT OUTER JOIN
                 ${this.config.DBOrderReview}.dbo.OrderControl AS b ON 

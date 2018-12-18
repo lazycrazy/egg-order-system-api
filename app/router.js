@@ -79,6 +79,7 @@ module.exports = app => {
     router.post('/api/purchase/updateItemAndLog', app.jwt, controller.purchase.updateItemAndLog)
     router.post('/api/purchase/deleteItemAndLog', app.jwt, controller.purchase.deleteItemAndLog)
     router.post('/api/purchase/reject', app.jwt, controller.purchase.reject)
+    router.get('/api/query/purchaseInfos', app.jwt, controller.purchaseQuery.purchaseInfos)
 
     // router.get('/api/sync/fs', controller.query.syncFunctionSetting)
     // router.get('/api/sync/oc', controller.query.syncOrderControl)
@@ -86,6 +87,7 @@ module.exports = app => {
   }
 
   if(app.config.IsHQ) {
+    router.post('/api/query/shopsSkuType', app.jwt, controller.query.shopsSkuType)
     router.get('/api/query/shopServerUrl/:shopid', app.jwt, controller.query.shopServerUrl)
     router.get('/api/query/shopServerInfo', app.jwt, controller.query.shopServerInfo)
     router.post('/api/query/fsExport', app.jwt, controller.query.fsExport)
