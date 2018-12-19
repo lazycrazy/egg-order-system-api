@@ -1,13 +1,14 @@
 USE [SCOrderReview]
 GO
-/****** 对象:  UserDefinedFunction [dbo].[F_CheckPurchaseItem]    脚本日期: 11/23/2018 16:47:30 ******/
+/****** 对象:  UserDefinedFunction [dbo].[F_CheckPurchaseItem]    脚本日期: 12/19/2018 13:16:08 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
+  
  
 --单号,商品id,操作人
-ALTER  FUNCTION [dbo].[F_CheckPurchaseItem](@sheetid char(16),@goodsid int,@auth int)
+CREATE  FUNCTION [dbo].[F_CheckPurchaseItem](@sheetid char(16),@goodsid int,@auth int)
 returns nvarchar(256) --没有问题的返回'',有问题返回原因 
 AS
 BEGIN
@@ -24,7 +25,11 @@ DECLARE @rs nvarchar(256)
 @MinOrderQty decimal (20,3),
 @MaxOrdQty decimal (20,3),
 @OrderPKNum1 decimal (12,3),
-@OrderPKNumnum int
+@OrderPKNumnum int,
+@Promotion1 int,
+@Promotion2 int
+ 
+
 
 SET @rs = ''
 SET @shopid = (select ShopID from mySHOPSHStock..PurchaseAsk0 where SheetID=@sheetid)
@@ -51,7 +56,13 @@ select  @OrderPKNum1=isnull( b.OrderPKNum1,0),@OrderPKNumnum=count(b.OrderPKNum1
   and a.goodsid=b.goodsid
 group by  b.OrderPKNum1
 
-
+--售价促销
+select @Promotion1=count(*) from mySHOPSHStock.dbo.GoodsShop a 
+  where PromotionType<>'n' and goodsid=@goodsid and  ShopId = @shopid 
+ 
+--进价判断
+select @Promotion2=count(*) from mySHOPSHStock.dbo.cost s where s.PromFlag=1 and goodsid=@goodsid and  ShopId = @shopid 
+ 
 
 --订货属性值判断
  --1 店铺
@@ -61,8 +72,7 @@ begin
   return @rs
 end
  
-
-
+ 
 --2 毛利属性
  if ((select count(1) from [dbo].[OrderControl] where [TypeID]=3 and shopid=@shopid and code = @oeshortname and [forbidden]=1)>0)
 begin   
@@ -81,12 +91,12 @@ begin
 set @rs = @rs +'品类店型组 '+Convert(varchar(30),@odeptid)+' 不允许订货'
   return @rs
 end
-
+ 
 
   --用户审批权限属性值 判断
 declare 
 @multiple numeric(10,2),--倍数
-@num numeric(10,2),--数量
+@Promotionnum numeric(10,2),--促销倍数
 @amt money,--金额
 @limitnum numeric(10,2),--每日数量上线
 @limitamt money,--每日金额上限
@@ -95,19 +105,18 @@ declare
 
 select 
 @multiple=isnull(fs.ordermultiple,0) ,--倍数*？
-@num=isnull(fs.[OrderNum],0),
+@Promotionnum=isnull(fs.[OrderNum],0),
 @amt=isnull(fs.[OrderAmt],0),  
 @limitnum=isnull(fs.[DayUpperlimit] ,0), 
 @limitamt=isnull(fs.[DayUpperlimitAmt],0) 
  from [dbo].[FunctionSetting] fs where 
   fs.FunctionId =@auth  and fs.ShopId = @shopid and GoodsID = @goodsid
 
-
 (select @totalnum=sum(Qty),@totalamt=sum(Qty*Cost) from  mySHOPSHStock..PurchaseAskItem where GoodsID = @goodsid )
   
  
 --倍数 与 数量比较
-if(@num =0 or @num is null)
+if(@multiple =0 or @multiple is null)
 begin
     set @rs =  convert(varchar,@goodsid)+ ':商品未设置审批权限' 
   return @rs
@@ -116,22 +125,65 @@ end
 --配送规格 判断 与 数量比较
 if (@OrderPKNum1>0 and @oqty%@OrderPKNum1<>0)
 begin
-    set @rs = @rs + '数量必须是配送规格'+convert(varchar,@OrderPKNum1)+'的倍数' 
+    set @rs = @rs + '数量必须是配送规格'+convert(varchar,@OrderPKNum1)+'的整倍数' 
   return @rs
 end
 
 --最小补货数量 判断 与 数量比较
+
 if(@oqty < @MinOrderQty or @oqty%@MinOrderQty<>0  ) and @OrderPKNumnum=0
 begin
-    set @rs = @rs + '数量必须是最小补货量'+convert(varchar,@MinOrderQty)+'的倍数' 
+    set @rs = @rs + '数量必须是最小补货量'+convert(varchar,@MinOrderQty)+'的整倍数' 
   return @rs
 end
-
---数量 与 数量比较
-if(@oqty > @num)
+  
+--3级审批不控制订货量
+if (@Promotion1>0 or @Promotion2>0) and @auth =3-- and @AdviceQty<>0
 begin
-    set @rs = @rs + '数量不能大于' + convert(varchar,@num)
-  return @rs
+ return @rs
+--  --数量 与 促销倍数*建议定量比较
+--  if(@oqty > @AdviceQty * @Promotionnum)   
+--  begin 
+--    set @rs = @rs + '数量' + convert(varchar,@oqty)+'不能大于促销品 建议补货量('+ convert(varchar,@AdviceQty)+')的' + convert(varchar,@multiple)+'倍'
+--    return @rs
+--  end
+--end
+--else
+--begin
+----数量 与 正常品倍数*建议定量比较
+--  if(@oqty > @AdviceQty * @multiple)
+--  begin 
+--    set @rs = @rs + '数量' + convert(varchar,@oqty)+'不能大于正常品建议补货量('+ convert(varchar,@AdviceQty)+')的' + convert(varchar,@multiple)+'倍'
+--    return @rs
+--  end
+end
+
+--3级审批检查
+if (@Promotion1=0 and @Promotion2=0) and @auth =3-- and @AdviceQty<>0
+begin
+  set @rs = @rs + '该商品信息有错误请检查商品标识' 
+ return @rs
+end
+
+
+--1，2 级审批控制建议定量
+if (@Promotion1>0 or @Promotion2>0) and @auth in (1,2)
+begin
+  --数量 与 促销倍数*建议定量比较
+  if(@oqty > @AdviceQty * @Promotionnum)
+  begin 
+    set @rs = @rs + '数量' + convert(varchar,@oqty)+'不能大于促销品 建议补货量('+ convert(varchar,@AdviceQty)+')的' + convert(varchar,@multiple)+'倍'
+    return @rs
+  end
+end
+else
+begin
+--数量 与 正常品倍数*建议定量比较
+  if(@oqty > @AdviceQty * @multiple)
+  begin 
+    set @rs = @rs + '数量' + convert(varchar,@oqty)+'不能大于正常品建议补货量('+ convert(varchar,@AdviceQty)+')的' + convert(varchar,@multiple)+'倍'
+    return @rs
+  end
 end
 
 --金额比较
@@ -157,6 +209,7 @@ end
 
 RETURN   @rs   
 END
+
 
 
 
@@ -205,12 +258,12 @@ BEGIN
    --同步审批功能设置
 delete from  FunctionSetting;
 insert into  FunctionSetting 
-select * from [10.2.0.234].hqOrderReview.dbo.FunctionSetting where ShopId = (select c.value from mySHOPSHStock.dbo.config c where c.Name='本店号'  );
+select * from [总部库的连接].hqOrderReview.dbo.FunctionSetting where ShopId = (select c.value from mySHOPSHStock.dbo.config c where c.Name='本店号'  );
 
 --同步订货属性设置
 delete from  OrderControl ;
 insert into  OrderControl 
-select * from [10.2.0.234].hqOrderReview.dbo.OrderControl where ShopId = (select c.value from mySHOPSHStock.dbo.config c where c.Name='本店号'  );
+select * from [总部库的连接].hqOrderReview.dbo.OrderControl where ShopId = (select c.value from mySHOPSHStock.dbo.config c where c.Name='本店号'  );
 
 END
 GO
@@ -287,7 +340,28 @@ update l set [serialid]=[serialid]-100  ,LogDesc=LogDesc+'-> 被修改，重新�
 END
 
 
-
+ --撤销16点后申请单
+create PROCEDURE [dbo].rejectTodayPurchaseAsk0
+AS
+BEGIN
+--系统时间小于今天16点，直接退出
+if(getdate() < CONVERT(varchar(10), GETDATE(), 23)+ ' 16:00:00.000' ) begin return end
+--记录日志
+INSERT INTO [dbo].[PurchaseControlItemLogs]
+           ([LogTime]
+           ,[LogUserID]
+           ,[LogDesc]
+           ,[SheetID],serialid) 
+           select getdate(),'000','每日16点后申请全部撤销',[SheetID],99  from
+          mySHOPSHStock..PurchaseAsk0 
+           where
+       EditDate > CONVERT(varchar(10), GETDATE(), 23) + ' 16:00:00.000' and Flag <> 99;
+--撤销申请单
+update mySHOPSHStock..PurchaseAsk0  set Flag=99 where 
+EditDate > CONVERT(varchar(10), GETDATE(), 23) + ' 16:00:00.000' 
+and Flag <> 99
+ 
+END
   
 
 --总部店铺

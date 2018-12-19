@@ -39,6 +39,11 @@ WHERE   (Name = '本店号')
     await ctx.model.query(`  exec ${this.config.DBOrderReview}..SyncMaster `,  { replacements: { }, type: ctx.model.QueryTypes.INSERT })
   }
 
+  async rejectToday() {
+    const { ctx } = this
+    await ctx.model.query(`  exec ${this.config.DBOrderReview}..rejectTodayPurchaseAsk0 `,  { replacements: { }, type: ctx.model.QueryTypes.INSERT })
+  }
+
   async rollbackReview() {
     const { ctx } = this
     await ctx.model.query(`  exec ${this.config.DBOrderReview}..RollbackReview `,  { replacements: { }, type: ctx.model.QueryTypes.INSERT })
