@@ -102,7 +102,7 @@ INSERT INTO ${this.config.DBOrderReview}.[dbo].[PurchaseControlItemLogs]
       [SheetID] = :sheetid
       and 
       [GoodsID] = :goodsid;
-      UPDATE ${this.config.DBStock}.[dbo].[PurchaseAskItem0_Bak]
+      UPDATE ${this.config.DBOrderReview}.[dbo].[PurchaseAskItem0_Bak]
    SET [Qty] = :qty 
    WHERE  
       [SheetID] = :sheetid
@@ -217,7 +217,7 @@ INSERT INTO ${this.config.DBOrderReview}.[dbo].[PurchaseControlItemLogs]
       [SheetID] = :sheetid
       and 
       [GoodsID] = :goodsid;
-      delete from ${this.config.DBStock}.[dbo].[PurchaseAskItem0_Bak]
+      delete from ${this.config.DBOrderReview}.[dbo].[PurchaseAskItem0_Bak]
    WHERE  
       [SheetID] = :sheetid
       and 

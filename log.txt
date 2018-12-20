@@ -1,6 +1,6 @@
-USE [SCOrderReview]
+ USE [SCOrderReview]
 GO
-/****** 对象:  UserDefinedFunction [dbo].[F_CheckPurchaseItem]    脚本日期: 12/19/2018 13:16:08 ******/
+/****** 对象:  UserDefinedFunction [dbo].[F_CheckPurchaseItem]    脚本日期: 12/20/2018 10:30:25 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -26,8 +26,10 @@ DECLARE @rs nvarchar(256)
 @MaxOrdQty decimal (20,3),
 @OrderPKNum1 decimal (12,3),
 @OrderPKNumnum int,
-@Promotion1 int,
-@Promotion2 int
+@RetailPromotion  int,
+@CostPromotion  int ,
+@normalRetail int,
+@normalCost int
  
 
 
@@ -35,7 +37,8 @@ SET @rs = ''
 SET @shopid = (select ShopID from mySHOPSHStock..PurchaseAsk0 where SheetID=@sheetid)
 select @oqty =pai.Qty,@oename =rtrim(g.ename),@oeshortname = rtrim(g.EShortName),@odeptid=left(g.DeptID,2),
 @ocost=pai.Cost,@AdviceQty= AdviceQty
- from mySHOPSHStock..[PurchaseAskItem0] pai join mySHOPSHStock..Goods g on pai.GoodsID = g.GoodsID where pai.SheetID=@sheetid and @goodsid = pai.GoodsID
+ from mySHOPSHStock..[PurchaseAskItem0] pai join mySHOPSHStock..Goods g on pai.GoodsID = g.GoodsID 
+  where pai.SheetID=@sheetid and @goodsid = pai.GoodsID
 
 if(isnull(@oqty,0) <=0) 
   return @rs
@@ -57,11 +60,17 @@ select  @OrderPKNum1=isnull( b.OrderPKNum1,0),@OrderPKNumnum=count(b.OrderPKNum1
 group by  b.OrderPKNum1
 
 --售价促销
-select @Promotion1=count(*) from mySHOPSHStock.dbo.GoodsShop a 
+select @RetailPromotion=count(*) from mySHOPSHStock.dbo.GoodsShop a 
   where PromotionType<>'n' and goodsid=@goodsid and  ShopId = @shopid 
+--正常售价
+select @CostPromotion=count(*) from mySHOPSHStock.dbo.GoodsShop a 
+  where PromotionType='n' and goodsid=@goodsid and  ShopId = @shopid 
  
---进价判断
-select @Promotion2=count(*) from mySHOPSHStock.dbo.cost s where s.PromFlag=1 and goodsid=@goodsid and  ShopId = @shopid 
+
+--正常进价 
+select @normalRetail=count(*) from mySHOPSHStock.dbo.cost s where s.PromFlag=0 and goodsid=@goodsid and  ShopId = @shopid 
+--促销进价
+select @normalCost=count(*) from mySHOPSHStock.dbo.cost s where s.PromFlag=1 and goodsid=@goodsid and  ShopId = @shopid 
  
 
 --订货属性值判断
@@ -112,7 +121,10 @@ select
  from [dbo].[FunctionSetting] fs where 
   fs.FunctionId =@auth  and fs.ShopId = @shopid and GoodsID = @goodsid
 
-(select @totalnum=sum(Qty),@totalamt=sum(Qty*Cost) from  mySHOPSHStock..PurchaseAskItem where GoodsID = @goodsid )
+ select @totalnum=sum(Qty),@totalamt=sum(Qty*Cost) from  mySHOPSHStock..PurchaseAskItem where GoodsID = @goodsid 
+   and SheetID in (select SheetID from mySHOPSHStock..PurchaseAsk
+           where convert(varchar(10),checkdate,111) in (
+              select convert(varchar(10),checkdate,111)  from  mySHOPSHStock..PurchaseAsk  where SheetID=@sheetid ) ) 
   
  
 --倍数 与 数量比较
@@ -137,8 +149,8 @@ begin
   return @rs
 end
   
---3级审批不控制订货量
-if (@Promotion1>0 or @Promotion2>0) and @auth =3-- and @AdviceQty<>0
+--3级审批不控制订货量多少
+if  @auth =3 -- and @AdviceQty<>0 (@Promotion1>0 or @Promotion2>0) and
 begin
  return @rs
 --  --数量 与 促销倍数*建议定量比较
@@ -158,16 +170,23 @@ begin
 --  end
 end
 
+
 --3级审批检查
-if (@Promotion1=0 and @Promotion2=0) and @auth =3-- and @AdviceQty<>0
+if (@RetailPromotion=0 and @CostPromotion=0 and @normalCost=0 and @normalRetail=0) and @auth =3-- and @AdviceQty<>0
 begin
-  set @rs = @rs + '该商品信息有错误请检查商品标识' 
+  set @rs = @rs + '该商品信息有错误，请检查商品标识！' 
  return @rs
 end
 
 
---1，2 级审批控制建议定量
-if (@Promotion1>0 or @Promotion2>0) and @auth in (1,2)
+--售价促销 select @RetailPromotion=count(*) from mySHOPSHStock.dbo.GoodsShop a  where PromotionType<>'n' and goodsid=@goodsid and  ShopId = @shopid 
+--正常售价   select @CostPromotion=count(*) from mySHOPSHStock.dbo.GoodsShop a  where PromotionType='n' and goodsid=@goodsid and  ShopId = @shopid 
+
+--正常进价   @normalRetail  =count(*) from mySHOPSHStock.dbo.cost s where s.PromFlag=0 and goodsid=@goodsid and  ShopId = @shopid 
+--促销进价  @normalCost  @normalRetail=count(*) from mySHOPSHStock.dbo.cost s where s.PromFlag=1 and goodsid=@goodsid and  ShopId = @shopid 
+  
+--1，2 级审批控制建议定量(做了售价促销，或是进价促销)
+if (@RetailPromotion>0 or @normalRetail>0) and @auth in (1,2)
 begin
   --数量 与 促销倍数*建议定量比较
   if(@oqty > @AdviceQty * @Promotionnum)
@@ -176,7 +195,9 @@ begin
     return @rs
   end
 end
-else
+
+--正常进价与正常售价 ==正常品
+if (@CostPromotion>0 and @normalCost>0) and @auth in (1,2)
 begin
 --数量 与 正常品倍数*建议定量比较
   if(@oqty > @AdviceQty * @multiple)
@@ -209,7 +230,6 @@ end
 
 RETURN   @rs   
 END
-
 
 
 
@@ -251,6 +271,8 @@ insert into hqOrderReview..Login ([LoginID]
      update scOrderReview..Login set IsAdmin =1 where Name='system';
      update scOrderReview..Login set password =rtrim(password);
      
+USE [SCOrderReview]
+GO
 --下载主档
 alter PROCEDURE SyncMaster
 AS

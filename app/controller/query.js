@@ -157,7 +157,7 @@ FROM ${this.config.DBOrderReview}.dbo.FunctionSetting AS fs WHERE   (fs.ShopId =
     const fs = await ctx.model.query(`
 SELECT  *
 FROM    (
-SELECT ROW_NUMBER() OVER ( ORDER BY fs.GoodsId ) AS RowNum,fs.FunctionId, fs.ShopId, fs.GoodsId, fs.DeptId, fs.ordermultiple, fs.OrderNum, fs.OrderAmt, fs.DayUpperlimit, 
+SELECT ROW_NUMBER() OVER ( ORDER BY g.customno ) AS RowNum,fs.FunctionId, fs.ShopId, fs.GoodsId, fs.DeptId, fs.ordermultiple, fs.OrderNum, fs.OrderAmt, fs.DayUpperlimit, 
                 fs.DayUpperlimitAmt, fs.LastModifyDT, g.BarcodeID AS barcodeid, g.Name AS goodsname, s.Name AS shopname, 
                 d.Name AS deptname,e.id kid,e.name kname,g.customno,isnull(mo.MinOrderQty,0) minorderqty,isnull(c.cost,0) cost
 FROM      ${this.config.DBOrderReview}.dbo.FunctionSetting AS fs INNER JOIN
