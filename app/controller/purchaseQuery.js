@@ -228,8 +228,8 @@ WHERE   (p.ShopId = :shopid) ${cdi} `,  { replacements: { shopid: payload.shopid
         select 
 (select count(1) from ${this.config.DBOrderReview}.[dbo].[PurchaseControlItemLogs] where
 serialid in (1,2,3) and GoodsID is null and DateDiff(day,LogTime,getdate())=0) 已审核数, 
-(select count(1) from ${this.config.DBStock}..PurchaseAsk0 where  Flag<>99) 待审核数,
-(select count(1) from ${this.config.DBStock}..PurchaseAsk0 where Flag=99) 驳回数
+(select count(1) from ${this.config.DBStock}..PurchaseAsk0 where  Flag<>99 and DateDiff(day,editdate,getdate())=0) 待审核数,
+(select count(1) from ${this.config.DBStock}..PurchaseAsk0 where Flag=99 and DateDiff(day,editdate,getdate())=0) 驳回数
 `,  { replacements: { }, type: ctx.model.QueryTypes.SELECT })
     // 设置响应内容和响应状态码
     ctx.helper.success({ctx, res})

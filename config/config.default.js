@@ -55,6 +55,7 @@
     username: 'sa',
     password: 'sa',
     dialectOptions: {
+      requestTimeout: 180000,
       useUTC: false,
       options: {
         tdsVersion: '7_2'
