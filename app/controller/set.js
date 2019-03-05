@@ -105,7 +105,7 @@ WHERE   (GoodsID IN (:gids))`
 SELECT   col1, col2, col3, g.DeptID, col4, col5, col6, col7, col8, GETDATE()
 FROM  ${this.config.DBOrderReview}.dbo.FunctionSettingImport AS fsi LEFT OUTER JOIN
                 ${this.config.DBStock}.dbo.Goods AS g ON fsi.col3 = g.GoodsID
-WHERE   (NOT EXISTS
+WHERE  left(g.DeptID,2) >=30 and (NOT EXISTS
                     (SELECT   1 AS Expr1
                      FROM  ${this.config.DBOrderReview}.dbo.FunctionSetting AS fs
                      WHERE   (FunctionId = fsi.col1) AND (ShopId = fsi.col2) AND (GoodsId = fsi.col3)))`

@@ -38,7 +38,7 @@ WITH originrow AS (SELECT   SheetID, GoodsID, MIN(LogTime) AS logtime
      FROM      ${this.config.DBStock}.dbo.PurchaseAsk AS pa INNER JOIN
                      ${this.config.DBStock}.dbo.PurchaseAskItem AS pai ON pa.SheetID = pai.SheetID LEFT OUTER JOIN
                      originqty ON pai.SheetID = originqty.SheetID AND pai.GoodsID = originqty.GoodsID
-           where (pa.CheckDate >= :dates) AND (pa.CheckDate <= DATEADD(day,1,:datee))
+           where pa.[ManageDeptID] >= 30 and (pa.CheckDate >= :dates) AND (pa.CheckDate <= DATEADD(day,1,:datee))
            ${cdi2} 
      GROUP BY pa.ShopID, CONVERT(VARCHAR(10), pa.CheckDate, 111), pai.GoodsID),rsp as
    (SELECT  ROW_NUMBER() OVER ( ORDER BY rs.shopid, rs.editdate, rs.goodsid ) AS RowNum, rs.shopid 店铺ID, rs.editdate 审核日期, rs.goodsid 商品ID, rs.oqty 申请订货数, rs.qty 批准订货数, g.CustomNo AS 商品码, g.Name AS 商品名, 
@@ -92,7 +92,7 @@ WITH originrow AS (SELECT   SheetID, GoodsID, MIN(LogTime) AS logtime
      FROM      ${this.config.DBStock}.dbo.PurchaseAsk AS pa INNER JOIN
                      ${this.config.DBStock}.dbo.PurchaseAskItem AS pai ON pa.SheetID = pai.SheetID LEFT OUTER JOIN
                      originqty ON pai.SheetID = originqty.SheetID AND pai.GoodsID = originqty.GoodsID
-           where (pa.CheckDate >= :dates) AND (pa.CheckDate <= DATEADD(day,1,:datee))
+           where pa.[ManageDeptID] >= 30 and (pa.CheckDate >= :dates) AND (pa.CheckDate <= DATEADD(day,1,:datee))
            ${cdi2} 
      GROUP BY pa.ShopID, CONVERT(VARCHAR(10), pa.CheckDate, 111), pai.GoodsID),rsp as
    (SELECT  ROW_NUMBER() OVER ( ORDER BY rs.shopid, rs.editdate, rs.goodsid ) AS RowNum, rs.shopid, rs.editdate, rs.goodsid, rs.oqty, rs.qty, g.CustomNo AS customno, g.Name AS goodsname, 
@@ -122,7 +122,7 @@ WITH originrow AS (SELECT   SheetID, GoodsID, MIN(LogTime) AS logtime
      FROM      ${this.config.DBStock}.dbo.PurchaseAsk AS pa INNER JOIN
                      ${this.config.DBStock}.dbo.PurchaseAskItem AS pai ON pa.SheetID = pai.SheetID LEFT OUTER JOIN
                      originqty ON pai.SheetID = originqty.SheetID AND pai.GoodsID = originqty.GoodsID
-           where (pa.CheckDate >= :dates) AND (pa.CheckDate <= DATEADD(day,1,:datee))
+           where  pa.ManageDeptID >= 30 and (pa.CheckDate >= :dates) AND (pa.CheckDate <= DATEADD(day,1,:datee))
            ${cdi2} 
      GROUP BY pa.ShopID, CONVERT(VARCHAR(10), pa.CheckDate, 111), pai.GoodsID)
     SELECT count(1) as value 
@@ -179,7 +179,7 @@ SELECT ROW_NUMBER() OVER ( ORDER BY p.EditDate ) AS RowNum,p.SheetID, p.ShopID, 
 FROM      ${this.config.DBStock}.dbo.PurchaseAsk0 AS p LEFT OUTER JOIN
                 ${this.config.DBStock}.dbo.Shop AS s ON p.ShopID = s.ID LEFT OUTER JOIN
                 ${this.config.DBStock}.dbo.SGroup AS sg on p.ManageDeptID = sg.id
-WHERE   (p.ShopId = :shopid) ${cdi.replace(/CheckDate/g, 'EditDate')} ) as resultRows
+WHERE   p.ManageDeptID >= 30 and (p.ShopId = :shopid) ${cdi.replace(/CheckDate/g, 'EditDate')} ) as resultRows
 WHERE   RowNum between :index and :count
 ORDER BY RowNum
 `,  { replacements: { shopid: payload.shopid, sheetid: payload.sheetid, editDateS: payload.editDateS, editDateE: payload.editDateE, index: (payload.curpage - 1) * payload.pagesize + 1, count: (payload.curpage) * payload.pagesize}, type: ctx.model.QueryTypes.SELECT })
@@ -187,7 +187,7 @@ ORDER BY RowNum
     	SELECT count(1) as value 
 FROM      ${this.config.DBStock}.dbo.PurchaseAsk0 AS p LEFT OUTER JOIN
                 ${this.config.DBStock}.dbo.Shop AS s ON p.ShopID = s.ID
-WHERE   (p.ShopId = :shopid) ${cdi.replace(/CheckDate/g, 'EditDate')} 
+WHERE   p.ManageDeptID >= 30 and (p.ShopId = :shopid) ${cdi.replace(/CheckDate/g, 'EditDate')} 
        `,  { replacements: { shopid: payload.shopid, sheetid: payload.sheetid, editDateS: payload.editDateS, editDateE: payload.editDateE }, type: ctx.model.QueryTypes.SELECT })
       total = rs[0].value
     }
@@ -203,7 +203,7 @@ SELECT ROW_NUMBER() OVER ( ORDER BY p.CheckDate ) AS RowNum,p.SheetID, p.ShopID,
 FROM      ${this.config.DBStock}.dbo.PurchaseAsk AS p LEFT OUTER JOIN
                 ${this.config.DBStock}.dbo.Shop AS s ON p.ShopID = s.ID LEFT OUTER JOIN
                 ${this.config.DBStock}.dbo.SGroup AS sg on p.ManageDeptID = sg.id
-WHERE   (p.ShopId = :shopid) ${cdi} ) as resultRows
+WHERE  p.ManageDeptID >= 30 and  (p.ShopId = :shopid) ${cdi} ) as resultRows
 WHERE   RowNum between :index and :count
 ORDER BY RowNum
 `,  { replacements: { shopid: payload.shopid, sheetid: payload.sheetid, editDateS: payload.editDateS, editDateE: payload.editDateE, index: (payload.curpage_x - 1) * payload.pagesize_x + 1, count: (payload.curpage_x) * payload.pagesize_x}, type: ctx.model.QueryTypes.SELECT })
@@ -211,7 +211,7 @@ ORDER BY RowNum
       SELECT count(1) as value 
 FROM      ${this.config.DBStock}.dbo.PurchaseAsk AS p LEFT OUTER JOIN
                 ${this.config.DBStock}.dbo.Shop AS s ON p.ShopID = s.ID
-WHERE   (p.ShopId = :shopid) ${cdi} `,  { replacements: { shopid: payload.shopid, sheetid: payload.sheetid, editDateS: payload.editDateS, editDateE: payload.editDateE }, type: ctx.model.QueryTypes.SELECT })
+WHERE   p.ManageDeptID >= 30 and (p.ShopId = :shopid) ${cdi} `,  { replacements: { shopid: payload.shopid, sheetid: payload.sheetid, editDateS: payload.editDateS, editDateE: payload.editDateE }, type: ctx.model.QueryTypes.SELECT })
       total1 = rs1[0].value
     }
     const res = { fs, total, fs1, total1 }
@@ -228,8 +228,8 @@ WHERE   (p.ShopId = :shopid) ${cdi} `,  { replacements: { shopid: payload.shopid
         select 
 (select count(1) from ${this.config.DBOrderReview}.[dbo].[PurchaseControlItemLogs] where
 serialid in (1,2,3) and GoodsID is null and DateDiff(day,LogTime,getdate())=0) 已审核数, 
-(select count(1) from ${this.config.DBStock}..PurchaseAsk0 where  Flag<>99 and DateDiff(day,editdate,getdate())=0) 待审核数,
-(select count(1) from ${this.config.DBStock}..PurchaseAsk0 where Flag=99 and DateDiff(day,editdate,getdate())=0) 驳回数
+(select count(1) from ${this.config.DBStock}..PurchaseAsk0 where  Flag<>99 and ManageDeptID >= 30 and DateDiff(day,editdate,getdate())=0) 待审核数,
+(select count(1) from ${this.config.DBStock}..PurchaseAsk0 where Flag=99 and ManageDeptID >= 30 and DateDiff(day,editdate,getdate())=0) 驳回数
 `,  { replacements: { }, type: ctx.model.QueryTypes.SELECT })
     // 设置响应内容和响应状态码
     ctx.helper.success({ctx, res})

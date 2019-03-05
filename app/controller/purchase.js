@@ -327,13 +327,13 @@ SELECT ROW_NUMBER() OVER ( ORDER BY p.EditDate ) AS RowNum,p.SheetID, p.ShopID, 
 FROM      ${this.config.DBStock}.dbo.PurchaseAsk0 AS p LEFT OUTER JOIN
                 ${this.config.DBStock}.dbo.Shop AS s ON p.ShopID = s.ID LEFT OUTER JOIN
                 ${this.config.DBStock}.dbo.SGroup AS sg on p.ManageDeptID = sg.id
-WHERE  p.Flag<> 99 and (p.ShopId = :shopid) ${cdi} ) as resultRows
+WHERE  p.[ManageDeptID] >= 30 and p.Flag<> 99 and (p.ShopId = :shopid) ${cdi} ) as resultRows
 WHERE   RowNum between :index and :count
 ORDER BY RowNum
 `,  { replacements: { shopid: payload.shopid, depts, sheetid: payload.sheetid, index: (payload.curpage - 1) * payload.pagesize + 1, count: (payload.curpage) * payload.pagesize}, type: ctx.model.QueryTypes.SELECT })
     const rs = await ctx.model.query(`
     	SELECT count(1) as value FROM ${this.config.DBStock}.dbo.PurchaseAsk0 AS p
-where p.Flag<> 99 and p.ShopID=:shopid ${cdi} `,  { replacements: { shopid: payload.shopid, depts, sheetid: payload.sheetid }, type: ctx.model.QueryTypes.SELECT })
+where p.[ManageDeptID] >= 30 and p.Flag<> 99 and p.ShopID=:shopid ${cdi} `,  { replacements: { shopid: payload.shopid, depts, sheetid: payload.sheetid }, type: ctx.model.QueryTypes.SELECT })
     const res = { fs, total: rs[0].value }
     ctx.logger.debug('res'+JSON.stringify(res))
     // 设置响应内容和响应状态码

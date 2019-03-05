@@ -214,7 +214,7 @@ WHERE  ${cdi}  (fs.ShopId = :shopid) AND (fs.FunctionId = :functionid)`,  { repl
                                            ${this.config.DBStock}.dbo.SGroup AS da ON da.ID = LEFT(g.DeptID, 3) LEFT OUTER JOIN
                                            ${this.config.DBStock}.dbo.SGroup AS k ON k.ID = LEFT(g.DeptID, 2) LEFT OUTER JOIN
                                            ${this.config.DBStock}.dbo.SGroup AS b ON b.ID = LEFT(g.DeptID, 1)
-                           WHERE   (gs.Flag IN (0, 8)) AND (gs.ShopID = :shopid))
+                           WHERE  LEFT(g.DeptID, 2) >= 30 and (gs.Flag IN (0, 8)) AND (gs.ShopID = :shopid))
     SELECT   type, id,customno  +' - '+ label label, pid, customno, goods_deptid,  CAST(type AS varchar) + CAST(id AS varchar) 
                     AS uid
     FROM      (SELECT DISTINCT 1 AS type, b_id AS id, cast(b_id as varchar) customno, b_id goods_deptid, b_name AS label, NULL AS pid
@@ -304,7 +304,7 @@ ORDER BY roleid`, { type: ctx.model.QueryTypes.SELECT})
     const { ctx } = this
     const sps = ctx.request.body.shops 
     const sql = `WITH abc AS (SELECT DISTINCT Shopid, LEFT(Deptid, 2) AS kid, SkuType
-                       FROM ${this.config.DBStock}.dbo.hy_deptsku)
+                       FROM ${this.config.DBStock}.dbo.hy_deptsku where LEFT(Deptid, 2) >= 30)
     SELECT   a.Shopid AS shopid, b.Name AS shopname, c.ID AS kid, c.Name AS kname, a.SkuType AS skutype,convert(varchar,c.ID)+'-'+a.SkuType kid_skutype
     FROM      abc AS a INNER JOIN
               ${this.config.DBStock}.dbo.Shop AS b ON a.Shopid = b.ID INNER JOIN
@@ -350,7 +350,7 @@ WHERE   (a.ShopType in (11,13) and a.Enable =1) and a.ID in (:sps)`, { replaceme
     ORDER BY shopid, sxid`, { replacements:{ sps }, type: ctx.model.QueryTypes.SELECT}) 
     const pldxzs = await ctx.model.query(`
         WITH abc AS (SELECT DISTINCT Shopid, LEFT(Deptid, 2) AS deptid, SkuType
-                       FROM      mySHOPHQStock.dbo.hy_deptsku)
+                       FROM      mySHOPHQStock.dbo.hy_deptsku where LEFT(Deptid, 2) >= 30)
         SELECT   CONVERT(bit, (CASE WHEN d.forbidden IS NULL THEN 1 ELSE 0 END)) AS isnew, 4 AS type, a.Shopid AS shopid, 
                   b.Name AS shopname, c.ID AS deptid, c.Name AS deptname, a.SkuType AS skutype, CONVERT(bit, ISNULL(d.forbidden, 
                   0)) AS forbidden
